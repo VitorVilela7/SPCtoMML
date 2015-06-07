@@ -8,12 +8,17 @@ namespace SPCtoMML
 {
 	class MMLDumper
 	{
-		private static byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
-		private static string[] notes = new[] { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
+		private static readonly byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
+		private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
 		private static Dictionary<int, int[]> findVolumeCache = new Dictionary<int, int[]>();
 
 		private int ticksToBreakSection = 48;
 		private StringBuilder currentOutput;
+
+		// settings
+		private bool allowStaccato;
+		private bool allowAdvancedStaccato;
+		private bool truncateSmallRests;
 
 		// sample memory
 		private List<int[]> sampleList = new List<int[]>();
@@ -76,89 +81,24 @@ namespace SPCtoMML
 
 		private int[] masterVolume = new int[2];
 		
-		double tempo;
-		bool insertTempo;
+		private double tempo;
+		private bool insertTempo;
 
-		Note[][] noteData;
-		int[][] staccato;
+		private Note[][] noteData;
+		private int[][] staccato;
 
-		//int[][] masterLoopTable;
-		//int[][] loops;
-
-		public MMLDumper(Note[][] noteData)
+		public MMLDumper(Note[][] noteData, int defaultTempo)
 		{
 			this.noteData = noteData;
+			this.tempo = defaultTempo;
 		}
 
-		//public void CreateLoopMap()
-		//{
-		//    masterLoopTable = new int[noteData.Length][];
-		//    int[][] loopMap = new int[noteData.Length][];
-
-		//    List<List<int>> loopGroups = new List<List<int>>();
-
-		//    for (int ch = 0; ch < noteData.Length; ++ch)
-		//    {
-		//        if (noteData[ch] == null)
-		//        {
-		//            continue;
-		//        }
-
-		//        List<Note> captured = new List<Note>();
-		//        List<int> capturedIndexes = new List<int>();
-
-		//        loopMap[ch] = new int[noteData[ch].Length];
-
-		//        for (int n = 0; n < noteData[ch].Length; ++n)
-		//        {
-		//            int index = captured.IndexOf(noteData[ch][n]);
-
-		//            if (index == -1||true)
-		//            {
-		//                index = captured.Count;
-		//                captured.Add(noteData[ch][n]);
-		//                capturedIndexes.Add(n);
-		//            }
-
-		//            loopMap[ch][n] = capturedIndexes[index];
-		//        }
-		//    }
-
-		//    for (int ch = 0; ch < noteData.Length; ++ch)
-		//    {
-		//        if (loopMap[ch] == null)
-		//        {
-		//            continue;
-		//        }
-				
-		//        List<int> bigLoop = new List<int>();
-		//        int ii = 0;
-
-		//        while (ii < loopMap[ch].Length)
-		//        {
-		//            List<int> group = new List<int>();
-
-		//            for (int r = loopMap[ch][ii]; ii < loopMap[ch].Length && loopMap[ch][ii] == r; ++ii, ++r)
-		//            {
-		//                group.Add(loopMap[ch][ii] + (ch << 24));
-		//            }
-
-		//            int index = loopGroups.FindIndex(x => x.SequenceEqual(group));
-					
-		//            if (index == -1)
-		//            {
-		//                index = loopGroups.Count;
-		//                loopGroups.Add(group);
-		//            }
-
-		//            bigLoop.Add(index);
-		//        }
-
-		//        masterLoopTable[ch] = bigLoop.ToArray();
-		//    }
-
-		//    loops = loopGroups.Select(x => x.ToArray()).ToArray();
-		//}
+		public void SetupStaccato(bool enable, bool enableAdvanced, bool truncate)
+		{
+			this.allowStaccato = enable;
+			this.allowAdvancedStaccato = enableAdvanced;
+			this.truncateSmallRests = truncate;
+		}
 
 		public void CreateStaccatoMap()
 		{
@@ -579,8 +519,18 @@ namespace SPCtoMML
 
 		private void handleStaccato(ref int length, ref int staccato, bool allowQuant)
 		{
-			int defaultLength = length;
-			int defaultStaccato = staccato;
+			if (!allowStaccato)
+			{
+				// update volume if needed and return
+				if (updateQ)
+				{
+					updateQ = false;
+					currentOutput.AppendFormat("q7{0:X} ", currentVolumeQ);
+				}
+				return;
+			}
+
+			allowQuant &= allowAdvancedStaccato;
 
 			//noteDurations
 			int bestDiff = staccato - 2;
@@ -621,12 +571,10 @@ namespace SPCtoMML
 			skip:
 			length = newTicks;
 			staccato = newRest;
-			if (staccato == 1)
+			if (staccato == 1 && truncateSmallRests)
 			{
-				//one... o_o
 				staccato = 0;
 				tickSync++;
-				//nom :3
 			}
 			else
 			{
