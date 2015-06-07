@@ -91,6 +91,7 @@ namespace SPCtoMML
 		{
 			this.noteData = noteData;
 			this.tempo = defaultTempo;
+			this.insertTempo = true;
 		}
 
 		public void SetupStaccato(bool enable, bool enableAdvanced, bool truncate)
