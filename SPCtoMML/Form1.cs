@@ -156,8 +156,22 @@ namespace SPCtoMML
 		{
 			appendLine("Converting traces...");
 
+			int tempo = 100;
+			Int32.TryParse(textBox3.Text, out tempo);
+
 			NoteDumper noteDumper = new NoteDumper(dspTrace.TraceResult);
-			MMLDumper mmlDumper = new MMLDumper(noteDumper.OutputNoteData());
+			MMLDumper mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
+
+			bool truncate = checkBox1.Checked;
+
+			if (radioButton2.Checked)
+			{
+				mmlDumper.SetupStaccato(true, true, truncate);
+			}
+			else
+			{
+				mmlDumper.SetupStaccato(radioButton1.Checked, false, truncate);
+			}
 
 			appendLine("Tuning samples...");
 			mmlDumper.SetUpSampleMultiplier();
@@ -165,11 +179,11 @@ namespace SPCtoMML
 			appendLine("Scanning staccato...");
 			mmlDumper.CreateStaccatoMap();
 
-			//appendLine("Creating loop data...");
-			//mmlDumper.CreateLoopMap();
-
-			append("Calculating Tempo... ");
-			appendLine("t{0}", mmlDumper.CalculateTempo());
+			if (radioButton4.Checked)
+			{
+				append("Calculating Tempo... ");
+				appendLine("t{0}", mmlDumper.CalculateTempo());
+			}
 
 			appendLine("Generating MML data...");
 
