@@ -17,5 +17,14 @@ namespace SPCtoMML
 			Application.SetCompatibleTextRenderingDefault(false);
 			Application.Run(new Form1());
 		}
+
+		/// <summary>
+		/// Obtains the program name.
+		/// </summary>
+		/// <returns>Returns the program name.</returns>
+		public static string GetProgramName()
+		{
+			return Application.ProductName + " " + Application.ProductVersion.Replace(".", "");
+		}
 	}
 }
