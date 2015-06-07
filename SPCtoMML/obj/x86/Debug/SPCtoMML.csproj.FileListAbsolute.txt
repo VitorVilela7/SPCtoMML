@@ -1,8 +1,0 @@
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\bin\Debug\SPCtoMML.exe
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\bin\Debug\SPCtoMML.pdb
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.Form1.resources
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.Properties.Resources.resources
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.csproj.GenerateResource.Cache
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.exe
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.pdb
-C:\Users\Vitor\documents\visual studio 2010\Projects\SPCtoMML\SPCtoMML\obj\x86\Debug\SPCtoMML.csprojResolveAssemblyReference.cache
