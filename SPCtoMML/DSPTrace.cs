@@ -38,7 +38,25 @@ namespace SPCtoMML
 		/// Holds the sample loop addresses for each channel.
 		/// </summary>
 		private int[] sampleLoop;
+		/// <summary>
+		/// Total seconds to trace.
+		/// </summary>
+		private int totalSeconds;
+		/// <summary>
+		/// Current amount of seconds.
+		/// </summary>
+		private int currentSeconds;
 
+		/// <summary>
+		/// Obtains the current tracking progress.
+		/// </summary>
+		public double CurrentProgress
+		{
+			get
+			{
+				return currentSeconds / (double)totalSeconds;
+			}
+		}
 		/// <summary>
 		/// Gets the tracing results.
 		/// </summary>
@@ -84,7 +102,6 @@ namespace SPCtoMML
 				return dspChanges.Count;
 			}
 		}
-
 		/// <summary>
 		/// Initializes the pointers and prepares SNES APU for tracking instructions.
 		/// </summary>
@@ -108,8 +125,10 @@ namespace SPCtoMML
 		{
 			initializeDSP();
 			lastTimer = 0;
+			totalSeconds = seconds;
+			currentSeconds = 0;
 
-			while (--seconds >= 0)
+			while (++currentSeconds < totalSeconds)
 			{
 				APU.EmuAPU(IntPtr.Zero, 24576000, 0);
 			}
