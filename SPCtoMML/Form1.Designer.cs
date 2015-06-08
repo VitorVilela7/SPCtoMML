@@ -42,7 +42,6 @@
 			this.radioButton3 = new System.Windows.Forms.RadioButton();
 			this.radioButton2 = new System.Windows.Forms.RadioButton();
 			this.radioButton1 = new System.Windows.Forms.RadioButton();
-			this.progressBar1 = new System.Windows.Forms.ProgressBar();
 			this.groupBox2 = new System.Windows.Forms.GroupBox();
 			this.radioButton5 = new System.Windows.Forms.RadioButton();
 			this.radioButton4 = new System.Windows.Forms.RadioButton();
@@ -50,11 +49,14 @@
 			this.groupBox4 = new System.Windows.Forms.GroupBox();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+			this.groupBox5 = new System.Windows.Forms.GroupBox();
+			this.button3 = new System.Windows.Forms.Button();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox3.SuspendLayout();
 			this.groupBox4.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
+			this.groupBox5.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -85,13 +87,13 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.textBox1.Font = new System.Drawing.Font("Courier New", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.textBox1.Location = new System.Drawing.Point(12, 41);
+			this.textBox1.Location = new System.Drawing.Point(456, 12);
 			this.textBox1.Multiline = true;
 			this.textBox1.Name = "textBox1";
 			this.textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
 			this.textBox1.Size = new System.Drawing.Size(320, 261);
 			this.textBox1.TabIndex = 2;
-			this.textBox1.Text = "Text output";
+			this.textBox1.Text = "Output log";
 			// 
 			// openFileDialog1
 			// 
@@ -126,7 +128,7 @@
 			// 
 			// button5
 			// 
-			this.button5.Location = new System.Drawing.Point(83, 44);
+			this.button5.Location = new System.Drawing.Point(161, 19);
 			this.button5.Margin = new System.Windows.Forms.Padding(1);
 			this.button5.Name = "button5";
 			this.button5.Size = new System.Drawing.Size(76, 23);
@@ -137,12 +139,12 @@
 			// 
 			// button6
 			// 
-			this.button6.Location = new System.Drawing.Point(6, 44);
+			this.button6.Location = new System.Drawing.Point(4, 17);
 			this.button6.Margin = new System.Windows.Forms.Padding(1);
 			this.button6.Name = "button6";
-			this.button6.Size = new System.Drawing.Size(75, 23);
+			this.button6.Size = new System.Drawing.Size(93, 23);
 			this.button6.TabIndex = 10;
-			this.button6.Text = "Output MML";
+			this.button6.Text = "Export MML";
 			this.button6.UseVisualStyleBackColor = true;
 			this.button6.Click += new System.EventHandler(this.button6_Click);
 			// 
@@ -152,7 +154,7 @@
 			this.groupBox1.Controls.Add(this.radioButton3);
 			this.groupBox1.Controls.Add(this.radioButton2);
 			this.groupBox1.Controls.Add(this.radioButton1);
-			this.groupBox1.Location = new System.Drawing.Point(640, 90);
+			this.groupBox1.Location = new System.Drawing.Point(12, 66);
 			this.groupBox1.Name = "groupBox1";
 			this.groupBox1.Size = new System.Drawing.Size(136, 109);
 			this.groupBox1.TabIndex = 11;
@@ -162,6 +164,8 @@
 			// checkBox1
 			// 
 			this.checkBox1.AutoSize = true;
+			this.checkBox1.Checked = true;
+			this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkBox1.Location = new System.Drawing.Point(6, 89);
 			this.checkBox1.Name = "checkBox1";
 			this.checkBox1.Size = new System.Drawing.Size(117, 17);
@@ -201,24 +205,17 @@
 			this.radioButton1.Text = "Allow simple staccato";
 			this.radioButton1.UseVisualStyleBackColor = true;
 			// 
-			// progressBar1
-			// 
-			this.progressBar1.Location = new System.Drawing.Point(676, 279);
-			this.progressBar1.Name = "progressBar1";
-			this.progressBar1.Size = new System.Drawing.Size(100, 23);
-			this.progressBar1.TabIndex = 12;
-			// 
 			// groupBox2
 			// 
 			this.groupBox2.Controls.Add(this.radioButton5);
 			this.groupBox2.Controls.Add(this.radioButton4);
 			this.groupBox2.Controls.Add(this.textBox3);
-			this.groupBox2.Location = new System.Drawing.Point(534, 134);
+			this.groupBox2.Location = new System.Drawing.Point(262, 12);
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.Size = new System.Drawing.Size(100, 65);
 			this.groupBox2.TabIndex = 13;
 			this.groupBox2.TabStop = false;
-			this.groupBox2.Text = "Tempo";
+			this.groupBox2.Text = "MML Tempo";
 			// 
 			// radioButton5
 			// 
@@ -246,20 +243,19 @@
 			// 
 			this.groupBox3.Controls.Add(this.button1);
 			this.groupBox3.Controls.Add(this.button2);
-			this.groupBox3.Controls.Add(this.button6);
 			this.groupBox3.Controls.Add(this.button5);
-			this.groupBox3.Location = new System.Drawing.Point(610, 12);
+			this.groupBox3.Location = new System.Drawing.Point(12, 12);
 			this.groupBox3.Name = "groupBox3";
-			this.groupBox3.Size = new System.Drawing.Size(166, 72);
+			this.groupBox3.Size = new System.Drawing.Size(244, 48);
 			this.groupBox3.TabIndex = 14;
 			this.groupBox3.TabStop = false;
-			this.groupBox3.Text = "Open/Dump";
+			this.groupBox3.Text = "Open/Analyze";
 			// 
 			// groupBox4
 			// 
 			this.groupBox4.Controls.Add(this.label1);
 			this.groupBox4.Controls.Add(this.textBox2);
-			this.groupBox4.Location = new System.Drawing.Point(497, 90);
+			this.groupBox4.Location = new System.Drawing.Point(154, 144);
 			this.groupBox4.Name = "groupBox4";
 			this.groupBox4.Size = new System.Drawing.Size(137, 38);
 			this.groupBox4.TabIndex = 15;
@@ -282,20 +278,40 @@
 			this.toolStripStatusLabel1.Size = new System.Drawing.Size(42, 17);
 			this.toolStripStatusLabel1.Text = "Ready.";
 			// 
+			// groupBox5
+			// 
+			this.groupBox5.Controls.Add(this.button3);
+			this.groupBox5.Controls.Add(this.button6);
+			this.groupBox5.Location = new System.Drawing.Point(154, 66);
+			this.groupBox5.Name = "groupBox5";
+			this.groupBox5.Size = new System.Drawing.Size(102, 72);
+			this.groupBox5.TabIndex = 17;
+			this.groupBox5.TabStop = false;
+			this.groupBox5.Text = "Conversion";
+			// 
+			// button3
+			// 
+			this.button3.Location = new System.Drawing.Point(4, 43);
+			this.button3.Margin = new System.Windows.Forms.Padding(1);
+			this.button3.Name = "button3";
+			this.button3.Size = new System.Drawing.Size(93, 23);
+			this.button3.TabIndex = 11;
+			this.button3.Text = "Export Samples";
+			this.button3.UseVisualStyleBackColor = true;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(788, 327);
+			this.Controls.Add(this.groupBox5);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.groupBox4);
 			this.Controls.Add(this.groupBox3);
 			this.Controls.Add(this.groupBox2);
-			this.Controls.Add(this.progressBar1);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.textBox1);
 			this.Name = "Form1";
-			this.Text = "Super SPC Dumper 1000";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
@@ -306,6 +322,7 @@
 			this.groupBox4.PerformLayout();
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
+			this.groupBox5.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -326,7 +343,6 @@
 		private System.Windows.Forms.RadioButton radioButton3;
 		private System.Windows.Forms.RadioButton radioButton2;
 		private System.Windows.Forms.RadioButton radioButton1;
-		private System.Windows.Forms.ProgressBar progressBar1;
 		private System.Windows.Forms.CheckBox checkBox1;
 		private System.Windows.Forms.GroupBox groupBox2;
 		private System.Windows.Forms.RadioButton radioButton5;
@@ -335,6 +351,8 @@
 		private System.Windows.Forms.GroupBox groupBox4;
 		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+		private System.Windows.Forms.GroupBox groupBox5;
+		private System.Windows.Forms.Button button3;
 	}
 }
 

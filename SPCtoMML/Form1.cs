@@ -23,7 +23,8 @@ namespace SPCtoMML
 		public Form1()
 		{
 			InitializeComponent();
-			player = new TracePlayer();
+			this.Text = Program.GetProgramName();
+			this.player = new TracePlayer();
 		}
 
 		private void startPlayer()
@@ -89,6 +90,11 @@ namespace SPCtoMML
 				statusText = statusText.Replace(Environment.NewLine, "");
 
 				toolStripStatusLabel1.Text = statusText;
+
+				if (progressBar != null)
+				{
+					progressBar.UpdateStatus(statusText);
+				}
 			});
 		}
 
@@ -119,15 +125,25 @@ namespace SPCtoMML
 			appendLine("Started thread...");
 			appendLine("");
 
+			dspTrace = null;
+
+			progressBar = new Form2(delegate()
+			{
+				return dspTrace == null ? 0 : dspTrace.CurrentProgress;
+			});
+			progressBar.Owner = this;
+
 			thread = new Thread(handler);
 			thread.Priority = ThreadPriority.BelowNormal;
 			thread.Start();
 
+			progressBar.ShowDialog();
 			executing = false;
 		}
 
 		Thread thread;
 		bool executing;
+		Form2 progressBar;
 
 		private void loadSPCInfo()
 		{
@@ -150,18 +166,27 @@ namespace SPCtoMML
 			appendLine("Done.\r\nTotal DSP traces = {0}", dspTrace.TotalTraces);
 			appendLine("");
 
+			progressBar.Invoke((ThreadStart)delegate()
+			{
+				progressBar.Close();
+				progressBar.Dispose();
+			});
 		}
 
 		private void handler3()
 		{
+			NoteDumper noteDumper = null;
+			MMLDumper mmlDumper = null;
+
 			appendLine("Converting traces...");
 
 			int tempo = 100;
 			Int32.TryParse(textBox3.Text, out tempo);
 
-			NoteDumper noteDumper = new NoteDumper(dspTrace.TraceResult);
-			MMLDumper mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
-
+			noteDumper = new NoteDumper(dspTrace.TraceResult);
+			mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
+			progressBar.UpdateHandler(delegate() { return mmlDumper.CurrentRatio; });
+			
 			bool truncate = checkBox1.Checked;
 
 			if (radioButton2.Checked)
@@ -204,6 +229,12 @@ namespace SPCtoMML
 			brrDumper.ExportBRRSamples(dir);
 
 			appendLine("All done.");
+
+			progressBar.Invoke((ThreadStart)delegate()
+			{
+				progressBar.Close();
+				progressBar.Dispose();
+			});
 		}
 
 		private void button5_Click(object sender, EventArgs e)
@@ -226,9 +257,19 @@ namespace SPCtoMML
 			}
 			executing = true;
 
+			if (progressBar != null)
+			{
+				progressBar.Dispose();
+				progressBar = null;
+			}
 			thread = new Thread(handler3);
 			thread.Priority = ThreadPriority.BelowNormal;
+
+			progressBar = new Form2(null);
+			progressBar.Owner = this;
 			thread.Start();
+			progressBar.ShowDialog();
+			progressBar = null;
 
 			executing = false;
 		}
