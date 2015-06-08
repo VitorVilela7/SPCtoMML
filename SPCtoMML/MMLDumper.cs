@@ -87,6 +87,11 @@ namespace SPCtoMML
 		private Note[][] noteData;
 		private int[][] staccato;
 
+		/// <summary>
+		/// Current progress ratio.
+		/// </summary>
+		public double CurrentRatio { get; private set; }
+
 		public MMLDumper(Note[][] noteData, int defaultTempo)
 		{
 			this.noteData = noteData;
@@ -117,6 +122,7 @@ namespace SPCtoMML
 
 				for (int n = 1; n < staccato[ch].Length; ++n)
 				{
+					CurrentRatio = (n / (double)staccato[ch].Length) * (ch / (double)noteData.Length);
 					if (noteData[ch][n].IsRest && !rest)
 					{
 						staccato[ch][n - 1] = noteData[ch][n].NoteLength;
@@ -141,6 +147,7 @@ namespace SPCtoMML
 
 				for (int n = 0; n < noteData[c].Length; n += staccato[c][n] > 0 ? 2 : 1)
 				{
+					CurrentRatio = (n / (double)noteData[c].Length) * (c / (double)noteData.Length);
 					if (noteData[c][n].IsRest)
 					{
 						totalTime += noteData[c][n].NoteLength;
@@ -303,6 +310,8 @@ namespace SPCtoMML
 
 				for (int l = 0; l < noteData[ch].Length; ++l)
 				{
+					CurrentRatio = (l / (double)noteData[ch].Length / 8.0) + (ch / 8.0);
+
 					Note note2 = noteData[ch][l];
 					int stac = staccato[ch][l];
 
@@ -349,9 +358,12 @@ namespace SPCtoMML
 				}
 			}
 
-			foreach (var pair in pitchesPerSample)
+			var array = pitchesPerSample.ToArray();
+
+			for (int i = 0; i < array.Length; ++i)
 			{
-				sampleMultipliers[pair.Key] = Pitch.FindPitchMultiplier(pair.Value.ToArray());
+				CurrentRatio = 0.1 + i / (double)array.Length * 9.0 / 10.0;
+				sampleMultipliers[array[i].Key] = Pitch.FindPitchMultiplier(array[i].Value.ToArray());
 			}
 		}
 		
