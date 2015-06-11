@@ -505,11 +505,6 @@ namespace SPCtoMML
 			removeLastChar('^');
 			removeLastChar(' ');
 
-			if (insertedSlide)
-			{
-				Debug.WriteLine(currentOutput.ToString());
-			}
-
 			breakSection(ticks);
 
 			if (stacTicks > 0)
@@ -1412,7 +1407,44 @@ namespace SPCtoMML
 
 			if (ticks < 128)
 			{
-				return "=" + ticks;
+				int dotCandidate = 1;
+				int dotCount = 0;
+
+				while (dotCandidate < 192 && dotCount == 0)
+				{
+					// should return 2, 3, 4, 6, 8, 12, 16, etc.
+					while ((192 / ++dotCandidate > ticks || 192 % dotCandidate != 0)) ;
+
+					for (int dots = 0; dots <= 10; ++dots)
+					{
+						int c = dotCandidate;
+						int length = 0;
+
+						for (int d = 0; d <= dots && c < 192; ++d, c <<= 1)
+						{
+							length += 192 / c;
+						}
+
+						if (length == ticks)
+						{
+							dotCount = dots;
+							break;
+						}
+						else if (length > ticks)
+						{
+							break;
+						}
+					}
+				}
+
+				if (dotCount == 0)
+				{
+					return "=" + ticks;
+				}
+				else
+				{
+					return String.Format("{0}{1}", dotCandidate, String.Join("", Enumerable.Repeat(".", dotCount)));
+				}
 			}
 
 			while (key1 > 0 && key2 <= 4 && ticks > 0)
