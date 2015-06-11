@@ -175,16 +175,21 @@ namespace SPCtoMML
 
 		private void handler3()
 		{
-			NoteDumper noteDumper = null;
-			MMLDumper mmlDumper = null;
+			resetLog();
+
+			if (dspTrace == null)
+			{
+				appendLine("Error: You must click \"Analyse SPC\" before exporting MML.");
+				return;
+			}
 
 			appendLine("Converting traces...");
 
 			int tempo = 100;
 			Int32.TryParse(textBox3.Text, out tempo);
 
-			noteDumper = new NoteDumper(dspTrace.TraceResult);
-			mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
+			NoteDumper noteDumper = new NoteDumper(dspTrace.TraceResult);
+			MMLDumper mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
 			progressBar.UpdateHandler(delegate() { return mmlDumper.CurrentRatio; });
 			
 			bool truncate = checkBox1.Checked;
@@ -280,6 +285,33 @@ namespace SPCtoMML
 			{
 				player.Stop();
 				player = null;
+			}
+		}
+
+		private void button3_Click(object sender, EventArgs e)
+		{
+			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+			{
+				resetLog();
+
+				if (dspTrace == null)
+				{
+					appendLine("Error: You must click \"Analyse SPC\" before exporting BRR samples.");
+				}
+				else
+				{
+					try
+					{
+						SampleDumper brrDumper = new SampleDumper(dspTrace.TraceResult);
+						brrDumper.ExportBRRSamples(folderBrowserDialog1.SelectedPath);
+						appendLine("BRR samples successfully exported.");
+					}
+					catch (Exception ex)
+					{
+						appendLine("An error occured while exporting BRR samples:");
+						appendLine(ex.Message);
+					}
+				}
 			}
 		}
 	}

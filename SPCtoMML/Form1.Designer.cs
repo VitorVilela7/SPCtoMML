@@ -51,6 +51,7 @@
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
 			this.button3 = new System.Windows.Forms.Button();
+			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox3.SuspendLayout();
@@ -298,6 +299,11 @@
 			this.button3.TabIndex = 11;
 			this.button3.Text = "Export Samples";
 			this.button3.UseVisualStyleBackColor = true;
+			this.button3.Click += new System.EventHandler(this.button3_Click);
+			// 
+			// folderBrowserDialog1
+			// 
+			this.folderBrowserDialog1.Description = "BRR samples destination folder";
 			// 
 			// Form1
 			// 
@@ -353,6 +359,7 @@
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
 		private System.Windows.Forms.GroupBox groupBox5;
 		private System.Windows.Forms.Button button3;
+		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
 	}
 }
 
