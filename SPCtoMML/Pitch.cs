@@ -51,11 +51,12 @@ namespace SPCtoMML
 		/// </summary>
 		/// <param name="pitches"></param>
 		/// <returns></returns>
-		public static int FindPitchMultiplier(int[] pitches)
+		public static int FindPitchMultiplier(int[] pitches, bool allowTuning)
 		{
 			int maximumPitch = FindPitch(0x45, 0, 0x0100);
 			int minMultiplier = 0x0100;
 			int minPitch = int.MaxValue;
+			int defaultTuning = allowTuning ? -1 : 0;
 
 			foreach (int pitch in pitches)
 			{
@@ -73,7 +74,7 @@ namespace SPCtoMML
 				int currentTuningScore = 0;
 				int currentTuning = 0;
 
-				var pitchData = pitches.Select(x => FindNote(x, m));
+				var pitchData = pitches.Select(x => FindNote(x, m, defaultTuning));
 
 				foreach (int[] data in pitchData)
 				{

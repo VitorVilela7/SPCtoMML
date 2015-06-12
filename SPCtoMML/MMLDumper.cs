@@ -377,7 +377,7 @@ namespace SPCtoMML
 			for (int i = 0; i < array.Length; ++i)
 			{
 				CurrentRatio = 0.1 + i / (double)array.Length * 9.0 / 10.0;
-				sampleMultipliers[array[i].Key] = Pitch.FindPitchMultiplier(array[i].Value.ToArray());
+				sampleMultipliers[array[i].Key] = Pitch.FindPitchMultiplier(array[i].Value.ToArray(), allowTuningCommand);
 			}
 		}
 		
