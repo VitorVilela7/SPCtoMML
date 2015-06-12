@@ -503,7 +503,7 @@ namespace SPCtoMML
 			// false false => true
 			// true  false => you're doing something wrong VV (true) (== will give false)
 
-			var lengthData = getNoteLength(currentTicks, insertedDelay == insertedSlide).Split('^');
+			var lengthData = getNoteLength(currentTicks, insertedSlide).Split('^');
 			currentOutput.Insert(firstLengthPosition, insertedDelay == insertedSlide ? "^" : " ");
 			currentOutput.Insert(firstLengthPosition, lengthData[0]);
 			currentOutput.Append(String.Join("^", lengthData, 1, lengthData.Length - 1));
@@ -1395,6 +1395,53 @@ namespace SPCtoMML
 			// TO DO: amplify, surround, slide, etc.
 		}
 
+		private string getNoteLengthStep2(int ticks)
+		{
+			int dotCandidate = 1;
+			int dotCount = 0;
+
+			if (192 % ticks == 0)
+			{
+				return (192 / ticks).ToString();
+			}
+
+			while (dotCandidate < 192 && dotCount == 0)
+			{
+				// should return 2, 3, 4, 6, 8, 12, 16, etc.
+				while ((192 / ++dotCandidate > ticks || 192 % dotCandidate != 0)) ;
+
+				for (int dots = 0; dots <= 10; ++dots)
+				{
+					int c = dotCandidate;
+					int length = 0;
+
+					for (int d = 0; d <= dots && c < 192; ++d, c <<= 1)
+					{
+						length += 192 / c;
+					}
+
+					if (length == ticks)
+					{
+						dotCount = dots;
+						break;
+					}
+					else if (length > ticks)
+					{
+						break;
+					}
+				}
+			}
+
+			if (dotCount == 0)
+			{
+				return "=" + ticks;
+			}
+			else
+			{
+				return String.Format("{0}{1}", dotCandidate, String.Join("", Enumerable.Repeat(".", dotCount)));
+			}
+		}
+
 		private string getNoteLength(int ticks, bool disallowWhole = false)
 		{
 			StringBuilder output = new StringBuilder();
@@ -1402,60 +1449,21 @@ namespace SPCtoMML
 			int key2 = 1;
 			bool first = true;
 
-			if (disallowWhole)
+			if (192 % ticks == 0 && !(disallowWhole && ticks == 192))
+			{
+				return (192 / ticks).ToString();
+			}
+			else if (ticks < 128)
+			{
+				return getNoteLengthStep2(ticks);
+			}
+			else if (disallowWhole)
 			{
 				key1 >>= 1;
 				key2 <<= 1;
 			}
 
-			if (192 % ticks == 0)
-			{
-				return (192 / ticks).ToString();
-			}
-
-			if (ticks < 128)
-			{
-				int dotCandidate = 1;
-				int dotCount = 0;
-
-				while (dotCandidate < 192 && dotCount == 0)
-				{
-					// should return 2, 3, 4, 6, 8, 12, 16, etc.
-					while ((192 / ++dotCandidate > ticks || 192 % dotCandidate != 0)) ;
-
-					for (int dots = 0; dots <= 10; ++dots)
-					{
-						int c = dotCandidate;
-						int length = 0;
-
-						for (int d = 0; d <= dots && c < 192; ++d, c <<= 1)
-						{
-							length += 192 / c;
-						}
-
-						if (length == ticks)
-						{
-							dotCount = dots;
-							break;
-						}
-						else if (length > ticks)
-						{
-							break;
-						}
-					}
-				}
-
-				if (dotCount == 0)
-				{
-					return "=" + ticks;
-				}
-				else
-				{
-					return String.Format("{0}{1}", dotCandidate, String.Join("", Enumerable.Repeat(".", dotCount)));
-				}
-			}
-
-			while (key1 > 0 && key2 <= 4 && ticks > 0)
+			while (key1 > 0 && key2 <= 192 && ticks > 128)
 			{
 				while (ticks >= key1)
 				{
@@ -1478,15 +1486,7 @@ namespace SPCtoMML
 					output.Append("^");
 				}
 
-				if (192 % ticks != 0)
-				{
-					output.Append("=");
-					output.Append(ticks);
-				}
-				else
-				{
-					output.Append(192 / ticks);
-				}
+				output.Append(getNoteLengthStep2(ticks));
 			}
 
 			return output.ToString();
