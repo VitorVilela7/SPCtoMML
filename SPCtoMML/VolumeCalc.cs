@@ -87,7 +87,7 @@ namespace SPCtoMML
 		/// <param name="volume"></param>
 		/// <param name="index"></param>
 		/// <returns></returns>
-		public static int[] FindVolume2(int[] volume, int index)
+		public static int[] FindVolume2(int[] volume, int index, bool amplify)
 		{
 			bool[] surround = new[] { false, false };
 
@@ -108,7 +108,9 @@ namespace SPCtoMML
 			double yDistance;
 			int y = FindPanning((int[])volume.Clone(), out yDistance);
 
-			for (int m = 0; m < 256; ++m)
+			int amplifyMaximum = amplify ? 256 : 1;
+
+			for (int m = 0; m < amplifyMaximum; ++m)
 			{
 				for (int q = 15; q >= 0; --q)
 				{
