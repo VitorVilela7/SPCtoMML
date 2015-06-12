@@ -1350,10 +1350,12 @@ namespace SPCtoMML
 
 			int[] volData;
 
-			if (!findVolumeCache.TryGetValue(mixedVolume, out volData))
+			int volumeHash = mixedVolume | ((allowVolumeAmplify ? 1 : 0) << 16);
+
+			if (!findVolumeCache.TryGetValue(volumeHash, out volData))
 			{
 				volData = VolumeCalc.FindVolume2(new[] { leftVolume, rightVolume }, 1, allowVolumeAmplify);
-				findVolumeCache[mixedVolume] = volData;
+				findVolumeCache[volumeHash] = volData;
 			}
 
 			if (currentVolumeQ != volData[0])
