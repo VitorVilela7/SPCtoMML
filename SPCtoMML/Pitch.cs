@@ -73,7 +73,7 @@ namespace SPCtoMML
 				int currentTuningScore = 0;
 				int currentTuning = 0;
 
-				int[][] pitchData = pitches.Select(x => FindNote(x, m)).ToArray();
+				var pitchData = pitches.Select(x => FindNote(x, m));
 
 				foreach (int[] data in pitchData)
 				{
