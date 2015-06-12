@@ -199,7 +199,7 @@ namespace SPCtoMML
 				}
 			}
 
-			while (tempo > 120)
+			while (tempo > 100)
 			{
 				tempo >>= 1;
 			}
