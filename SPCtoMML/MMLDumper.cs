@@ -16,6 +16,7 @@ namespace SPCtoMML
 		private StringBuilder currentOutput;
 
 		// settings
+		private bool allowVolumeAmplify;
 		private bool allowStaccato;
 		private bool allowAdvancedStaccato;
 		private bool truncateSmallRests;
@@ -97,6 +98,11 @@ namespace SPCtoMML
 			this.noteData = noteData;
 			this.tempo = defaultTempo;
 			this.insertTempo = true;
+		}
+
+		public void SetupVolume(bool amplify)
+		{
+			this.allowVolumeAmplify = amplify;
 		}
 
 		public void SetupStaccato(bool enable, bool enableAdvanced, bool truncate)
@@ -1346,7 +1352,7 @@ namespace SPCtoMML
 
 			if (!findVolumeCache.TryGetValue(mixedVolume, out volData))
 			{
-				volData = VolumeCalc.FindVolume2(new[] { leftVolume, rightVolume }, 1);
+				volData = VolumeCalc.FindVolume2(new[] { leftVolume, rightVolume }, 1, allowVolumeAmplify);
 				findVolumeCache[mixedVolume] = volData;
 			}
 
