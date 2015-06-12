@@ -204,6 +204,7 @@ namespace SPCtoMML
 			}
 
 			mmlDumper.SetupVolume(checkBox2.Checked);
+			mmlDumper.SetupPitch(checkBox3.Checked, checkBox4.Checked);
 
 			appendLine("Tuning samples...");
 			mmlDumper.SetUpSampleMultiplier();
