@@ -409,7 +409,7 @@ namespace SPCtoMML
 			mmlVolumeUpdate(note.VolumeCache[0]);
 
 			int[] pitchData = parsePitchCachePass2(note.PitchCache);
-			int[] noteData = Pitch.FindNote(pitchData[3], sampleMultipliers[note.Sample]);
+			int[] noteData = Pitch.FindNote(pitchData[3], sampleMultipliers[note.Sample], allowTuningCommand ? -1 : 0);
 
 			if (pitchData.Length == 8 && pitchData[4] == 3)
 			{
