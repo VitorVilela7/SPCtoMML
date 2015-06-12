@@ -131,7 +131,11 @@ namespace SPCtoMML
 			{
 				int currrentDistance = pitch - FindPitch(n, defaultTuning, multiplier8x8);
 
-				if (!lockTuning && (currrentDistance > distance || (currrentDistance < 0)))
+				if (currrentDistance == 0)
+				{
+					return new[] { n, defaultTuning, 0, pitch };
+				}
+				else if (!lockTuning && (currrentDistance > distance || (currrentDistance < 0)))
 				{
 					break;
 				}
@@ -140,19 +144,13 @@ namespace SPCtoMML
 					break;
 				}
 				
-
 				distance = Math.Abs(currrentDistance);
 				note = n;
-
-				if (distance == 0)
-				{
-					return new[] { note, defaultTuning, 0, pitch };
-				}
 			}
 
 			if (lockTuning)
 			{
-				return new[] { note, defaultTuning, 0, pitch };
+				return new[] { note, defaultTuning, distance, pitch };
 			}
 
 			for (int t = 0; t < 256; ++t)
