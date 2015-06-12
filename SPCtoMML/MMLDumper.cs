@@ -20,6 +20,8 @@ namespace SPCtoMML
 		private bool allowStaccato;
 		private bool allowAdvancedStaccato;
 		private bool truncateSmallRests;
+		private bool allowTuningCommand;
+		private bool allowPitchVibrato;
 
 		// sample memory
 		private List<int[]> sampleList = new List<int[]>();
@@ -98,6 +100,12 @@ namespace SPCtoMML
 			this.noteData = noteData;
 			this.tempo = defaultTempo;
 			this.insertTempo = true;
+		}
+
+		public void SetupPitch(bool tuning, bool vibrato)
+		{
+			this.allowTuningCommand = tuning;
+			this.allowPitchVibrato = vibrato;
 		}
 
 		public void SetupVolume(bool amplify)
@@ -795,6 +803,12 @@ namespace SPCtoMML
 		private int[] parsePitchCachePass2(int[] pitchCache)
 		{
 			int[] cache = parsePitchCachePass1(pitchCache);
+
+			if (!allowPitchVibrato)
+			{
+				return cache;
+			}
+
 			Dictionary<int, List<int>> pitchDelta = new Dictionary<int, List<int>>();
 
 			int last = cache[3];
@@ -1328,7 +1342,7 @@ namespace SPCtoMML
 
 		private void mmlTuningUpdate(int newTuning)
 		{
-			if (currentTuning != newTuning)
+			if (currentTuning != newTuning && allowTuningCommand)
 			{
 				currentTuning = newTuning;
 				currentOutput.AppendFormat("$EE ${0:X2} ", currentTuning);
