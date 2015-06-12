@@ -52,12 +52,15 @@
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
 			this.button3 = new System.Windows.Forms.Button();
 			this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+			this.groupBox6 = new System.Windows.Forms.GroupBox();
+			this.checkBox2 = new System.Windows.Forms.CheckBox();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox3.SuspendLayout();
 			this.groupBox4.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
 			this.groupBox5.SuspendLayout();
+			this.groupBox6.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -115,9 +118,9 @@
 			this.label1.AutoSize = true;
 			this.label1.Location = new System.Drawing.Point(6, 17);
 			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(95, 13);
+			this.label1.Size = new System.Drawing.Size(93, 13);
 			this.label1.TabIndex = 4;
-			this.label1.Text = "Seconds to Dump:";
+			this.label1.Text = "Seconds to dump:";
 			// 
 			// textBox3
 			// 
@@ -305,11 +308,34 @@
 			// 
 			this.folderBrowserDialog1.Description = "BRR samples destination folder";
 			// 
+			// groupBox6
+			// 
+			this.groupBox6.Controls.Add(this.checkBox2);
+			this.groupBox6.Location = new System.Drawing.Point(262, 83);
+			this.groupBox6.Name = "groupBox6";
+			this.groupBox6.Size = new System.Drawing.Size(105, 41);
+			this.groupBox6.TabIndex = 18;
+			this.groupBox6.TabStop = false;
+			this.groupBox6.Text = "Volume";
+			// 
+			// checkBox2
+			// 
+			this.checkBox2.AutoSize = true;
+			this.checkBox2.Checked = true;
+			this.checkBox2.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBox2.Location = new System.Drawing.Point(6, 19);
+			this.checkBox2.Name = "checkBox2";
+			this.checkBox2.Size = new System.Drawing.Size(97, 17);
+			this.checkBox2.TabIndex = 15;
+			this.checkBox2.Text = "Amplify support";
+			this.checkBox2.UseVisualStyleBackColor = true;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(788, 327);
+			this.Controls.Add(this.groupBox6);
 			this.Controls.Add(this.groupBox5);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.groupBox4);
@@ -329,6 +355,8 @@
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
 			this.groupBox5.ResumeLayout(false);
+			this.groupBox6.ResumeLayout(false);
+			this.groupBox6.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -360,6 +388,8 @@
 		private System.Windows.Forms.GroupBox groupBox5;
 		private System.Windows.Forms.Button button3;
 		private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+		private System.Windows.Forms.GroupBox groupBox6;
+		private System.Windows.Forms.CheckBox checkBox2;
 	}
 }
 

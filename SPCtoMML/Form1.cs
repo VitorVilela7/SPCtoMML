@@ -203,6 +203,8 @@ namespace SPCtoMML
 				mmlDumper.SetupStaccato(radioButton1.Checked, false, truncate);
 			}
 
+			mmlDumper.SetupVolume(checkBox2.Checked);
+
 			appendLine("Tuning samples...");
 			mmlDumper.SetUpSampleMultiplier();
 
