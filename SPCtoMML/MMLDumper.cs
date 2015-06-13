@@ -22,6 +22,7 @@ namespace SPCtoMML
 		private bool truncateSmallRests;
 		private bool allowTuningCommand;
 		private bool allowPitchVibrato;
+		private string samplesFolder;
 
 		// sample memory
 		private List<int[]> sampleList = new List<int[]>();
@@ -111,6 +112,11 @@ namespace SPCtoMML
 		public void SetupVolume(bool amplify)
 		{
 			this.allowVolumeAmplify = amplify;
+		}
+
+		public void SetupPathSamples(string name)
+		{
+			this.samplesFolder = name;
 		}
 
 		public void SetupStaccato(bool enable, bool enableAdvanced, bool truncate)
@@ -1001,7 +1007,8 @@ namespace SPCtoMML
 		{
 			StringBuilder output = new StringBuilder();
 
-			output.AppendLine("#path \"test\"");
+			output.AppendFormat("#path \"{0}\"", samplesFolder);
+			output.AppendLine();
 			output.AppendLine();
 
 			output.AppendLine("#samples");
