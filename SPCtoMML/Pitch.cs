@@ -121,19 +121,19 @@ namespace SPCtoMML
 		/// <returns></returns>
 		public static int[] FindNote(int pitch, int multiplier8x8, int defaultTuning = -1)
 		{
+			int note, tuning;
 			int distance = pitch;
-			int note = 0;
-			int tuning = 0;
-			bool lockTuning = defaultTuning != -1 ? true : false;
-			defaultTuning = defaultTuning == -1 ? 0 : defaultTuning;
 
-			for (int n = 0; n < 70; ++n)
+			bool lockTuning = defaultTuning != -1;
+			defaultTuning = lockTuning ? defaultTuning : 0;
+
+			for (note = 0; note < 70; ++note)
 			{
-				int currrentDistance = pitch - FindPitch(n, defaultTuning, multiplier8x8);
+				int currrentDistance = pitch - FindPitch(note, defaultTuning, multiplier8x8);
 
 				if (currrentDistance == 0)
 				{
-					return new[] { n, defaultTuning, 0, pitch };
+					return new[] { note, defaultTuning, 0, pitch };
 				}
 				else if (!lockTuning && (currrentDistance > distance || (currrentDistance < 0)))
 				{
@@ -144,34 +144,33 @@ namespace SPCtoMML
 					break;
 				}
 				
-				distance = Math.Abs(currrentDistance);
-				note = n;
+				distance = currrentDistance;
 			}
+
+			--note;
 
 			if (lockTuning)
 			{
-				return new[] { note, defaultTuning, distance, pitch };
+				return new[] { Math.Max(0, note), defaultTuning, distance, pitch };
 			}
 
-			for (int t = 0; t < 256; ++t)
+			for (tuning = 1; tuning < 256; ++tuning)
 			{
-				int currrentDistance = Math.Abs(pitch - FindPitch(note, t, multiplier8x8));
+				int currrentDistance = Math.Abs(pitch - FindPitch(note, tuning, multiplier8x8));
 
-				if (currrentDistance > distance)
+				if (currrentDistance == 0)
+				{
+					return new[] { note, tuning, 0, pitch };
+				}
+				else if (currrentDistance > distance)
 				{
 					break;
 				}
 
 				distance = currrentDistance;
-				tuning = t;
-
-				if (distance == 0)
-				{
-					return new[] { note, tuning, 0, pitch };
-				}
 			}
 
-			return new[] { note, tuning, distance, pitch };
+			return new[] { note, tuning - 1, distance, pitch };
 		}
 	}
 }
