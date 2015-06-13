@@ -205,6 +205,7 @@ namespace SPCtoMML
 
 			mmlDumper.SetupVolume(checkBox2.Checked);
 			mmlDumper.SetupPitch(checkBox3.Checked, checkBox4.Checked);
+			mmlDumper.SetupPathSamples(textBox6.Text);
 
 			appendLine("Tuning samples...");
 			mmlDumper.SetUpSampleMultiplier();
@@ -220,20 +221,13 @@ namespace SPCtoMML
 
 			appendLine("Generating MML data...");
 
-			File.WriteAllText("C:/Users/Vitor/Desktop/AMK/music/test.txt", mmlDumper.OutputMML());
+			File.WriteAllText(textBox4.Text, mmlDumper.OutputMML());
 
 			appendLine("Generating samples...");
 
 			SampleDumper brrDumper = new SampleDumper(dspTrace.TraceResult);
 
-			string dir = "C:/Users/Vitor/Desktop/AMK/samples/test";
-
-			if (Directory.Exists(dir))
-			{
-				Directory.Delete(dir, true);
-			}
-			Directory.CreateDirectory(dir);
-
+			string dir = textBox5.Text + "/";
 			brrDumper.ExportBRRSamples(dir);
 
 			appendLine("All done.");
@@ -259,6 +253,15 @@ namespace SPCtoMML
 
 		private void button6_Click(object sender, EventArgs e)
 		{
+			if (textBox4.Text == "")
+			{
+				button4.PerformClick();
+			}
+			if (textBox5.Text == "")
+			{
+				button7.PerformClick();
+			}
+
 			if (executing)
 			{
 				return;
@@ -293,27 +296,51 @@ namespace SPCtoMML
 
 		private void button3_Click(object sender, EventArgs e)
 		{
-			if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
+			if (textBox5.Text == "")
 			{
-				resetLog();
+				button7.PerformClick();
+			}
 
-				if (dspTrace == null)
+			resetLog();
+
+			if (dspTrace == null)
+			{
+				appendLine("Error: You must click \"Analyse SPC\" before exporting BRR samples.");
+			}
+			else
+			{
+				try
 				{
-					appendLine("Error: You must click \"Analyse SPC\" before exporting BRR samples.");
+					SampleDumper brrDumper = new SampleDumper(dspTrace.TraceResult);
+					brrDumper.ExportBRRSamples(folderBrowserDialog1.SelectedPath);
+					appendLine("BRR samples successfully exported.");
 				}
-				else
+				catch (Exception ex)
 				{
-					try
-					{
-						SampleDumper brrDumper = new SampleDumper(dspTrace.TraceResult);
-						brrDumper.ExportBRRSamples(folderBrowserDialog1.SelectedPath);
-						appendLine("BRR samples successfully exported.");
-					}
-					catch (Exception ex)
-					{
-						appendLine("An error occured while exporting BRR samples:");
-						appendLine(ex.Message);
-					}
+					appendLine("An error occured while exporting BRR samples:");
+					appendLine(ex.Message);
+				}
+			}
+		}
+
+		private void button4_Click(object sender, EventArgs e)
+		{
+			if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+			{
+				textBox4.Text = saveFileDialog1.FileName;
+			}
+		}
+
+		private void button7_Click(object sender, EventArgs e)
+		{
+			if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+			{
+				textBox5.Text = folderBrowserDialog1.SelectedPath;
+				textBox6.Text = new FileInfo(folderBrowserDialog1.SelectedPath + "/").Directory.Name;
+
+				if (textBox6.Text.ToLower() == "samples")
+				{
+					textBox6.Text = "";
 				}
 			}
 		}

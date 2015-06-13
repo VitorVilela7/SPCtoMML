@@ -57,6 +57,16 @@
 			this.groupBox7 = new System.Windows.Forms.GroupBox();
 			this.checkBox3 = new System.Windows.Forms.CheckBox();
 			this.checkBox4 = new System.Windows.Forms.CheckBox();
+			this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+			this.groupBox8 = new System.Windows.Forms.GroupBox();
+			this.label2 = new System.Windows.Forms.Label();
+			this.textBox4 = new System.Windows.Forms.TextBox();
+			this.button4 = new System.Windows.Forms.Button();
+			this.label3 = new System.Windows.Forms.Label();
+			this.textBox5 = new System.Windows.Forms.TextBox();
+			this.button7 = new System.Windows.Forms.Button();
+			this.label4 = new System.Windows.Forms.Label();
+			this.textBox6 = new System.Windows.Forms.TextBox();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox3.SuspendLayout();
@@ -65,6 +75,7 @@
 			this.groupBox5.SuspendLayout();
 			this.groupBox6.SuspendLayout();
 			this.groupBox7.SuspendLayout();
+			this.groupBox8.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// button1
@@ -310,7 +321,7 @@
 			// 
 			// folderBrowserDialog1
 			// 
-			this.folderBrowserDialog1.Description = "BRR samples destination folder";
+			this.folderBrowserDialog1.Description = "The destination folder for the BRR samples:";
 			// 
 			// groupBox6
 			// 
@@ -325,8 +336,6 @@
 			// checkBox2
 			// 
 			this.checkBox2.AutoSize = true;
-			this.checkBox2.Checked = true;
-			this.checkBox2.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkBox2.Location = new System.Drawing.Point(6, 19);
 			this.checkBox2.Name = "checkBox2";
 			this.checkBox2.Size = new System.Drawing.Size(97, 17);
@@ -364,16 +373,113 @@
 			this.checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.checkBox4.Location = new System.Drawing.Point(6, 42);
 			this.checkBox4.Name = "checkBox4";
-			this.checkBox4.Size = new System.Drawing.Size(106, 17);
+			this.checkBox4.Size = new System.Drawing.Size(107, 17);
 			this.checkBox4.TabIndex = 17;
-			this.checkBox4.Text = "Vibrato detection";
+			this.checkBox4.Text = "Vibrato emulation";
 			this.checkBox4.UseVisualStyleBackColor = true;
+			// 
+			// saveFileDialog1
+			// 
+			this.saveFileDialog1.Filter = "MML files|*.txt;*.mml";
+			this.saveFileDialog1.RestoreDirectory = true;
+			this.saveFileDialog1.Title = "Select output MML file path";
+			// 
+			// groupBox8
+			// 
+			this.groupBox8.Controls.Add(this.textBox6);
+			this.groupBox8.Controls.Add(this.label4);
+			this.groupBox8.Controls.Add(this.button7);
+			this.groupBox8.Controls.Add(this.textBox5);
+			this.groupBox8.Controls.Add(this.label3);
+			this.groupBox8.Controls.Add(this.button4);
+			this.groupBox8.Controls.Add(this.textBox4);
+			this.groupBox8.Controls.Add(this.label2);
+			this.groupBox8.Location = new System.Drawing.Point(195, 188);
+			this.groupBox8.Name = "groupBox8";
+			this.groupBox8.Size = new System.Drawing.Size(255, 85);
+			this.groupBox8.TabIndex = 20;
+			this.groupBox8.TabStop = false;
+			this.groupBox8.Text = "Output Settings";
+			// 
+			// label2
+			// 
+			this.label2.AutoSize = true;
+			this.label2.Location = new System.Drawing.Point(26, 16);
+			this.label2.Name = "label2";
+			this.label2.Size = new System.Drawing.Size(91, 13);
+			this.label2.TabIndex = 0;
+			this.label2.Text = "MML output path:";
+			// 
+			// textBox4
+			// 
+			this.textBox4.Location = new System.Drawing.Point(121, 13);
+			this.textBox4.Margin = new System.Windows.Forms.Padding(1);
+			this.textBox4.Name = "textBox4";
+			this.textBox4.Size = new System.Drawing.Size(103, 20);
+			this.textBox4.TabIndex = 1;
+			// 
+			// button4
+			// 
+			this.button4.Location = new System.Drawing.Point(226, 11);
+			this.button4.Margin = new System.Windows.Forms.Padding(1);
+			this.button4.Name = "button4";
+			this.button4.Size = new System.Drawing.Size(25, 23);
+			this.button4.TabIndex = 2;
+			this.button4.Text = "...";
+			this.button4.UseVisualStyleBackColor = true;
+			this.button4.Click += new System.EventHandler(this.button4_Click);
+			// 
+			// label3
+			// 
+			this.label3.AutoSize = true;
+			this.label3.Location = new System.Drawing.Point(10, 38);
+			this.label3.Name = "label3";
+			this.label3.Size = new System.Drawing.Size(107, 13);
+			this.label3.TabIndex = 3;
+			this.label3.Text = "Samples output path:";
+			// 
+			// textBox5
+			// 
+			this.textBox5.Location = new System.Drawing.Point(121, 35);
+			this.textBox5.Margin = new System.Windows.Forms.Padding(1);
+			this.textBox5.Name = "textBox5";
+			this.textBox5.Size = new System.Drawing.Size(103, 20);
+			this.textBox5.TabIndex = 4;
+			// 
+			// button7
+			// 
+			this.button7.Location = new System.Drawing.Point(226, 33);
+			this.button7.Margin = new System.Windows.Forms.Padding(1);
+			this.button7.Name = "button7";
+			this.button7.Size = new System.Drawing.Size(25, 23);
+			this.button7.TabIndex = 5;
+			this.button7.Text = "...";
+			this.button7.UseVisualStyleBackColor = true;
+			this.button7.Click += new System.EventHandler(this.button7_Click);
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(50, 60);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(67, 13);
+			this.label4.TabIndex = 6;
+			this.label4.Text = "#path folder:";
+			// 
+			// textBox6
+			// 
+			this.textBox6.Location = new System.Drawing.Point(121, 57);
+			this.textBox6.Margin = new System.Windows.Forms.Padding(1);
+			this.textBox6.Name = "textBox6";
+			this.textBox6.Size = new System.Drawing.Size(130, 20);
+			this.textBox6.TabIndex = 7;
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(788, 327);
+			this.Controls.Add(this.groupBox8);
 			this.Controls.Add(this.groupBox7);
 			this.Controls.Add(this.groupBox6);
 			this.Controls.Add(this.groupBox5);
@@ -399,6 +505,8 @@
 			this.groupBox6.PerformLayout();
 			this.groupBox7.ResumeLayout(false);
 			this.groupBox7.PerformLayout();
+			this.groupBox8.ResumeLayout(false);
+			this.groupBox8.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -435,6 +543,16 @@
 		private System.Windows.Forms.GroupBox groupBox7;
 		private System.Windows.Forms.CheckBox checkBox4;
 		private System.Windows.Forms.CheckBox checkBox3;
+		private System.Windows.Forms.SaveFileDialog saveFileDialog1;
+		private System.Windows.Forms.GroupBox groupBox8;
+		private System.Windows.Forms.TextBox textBox6;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.Button button7;
+		private System.Windows.Forms.TextBox textBox5;
+		private System.Windows.Forms.Label label3;
+		private System.Windows.Forms.Button button4;
+		private System.Windows.Forms.TextBox textBox4;
+		private System.Windows.Forms.Label label2;
 	}
 }
 
