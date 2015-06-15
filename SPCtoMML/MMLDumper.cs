@@ -386,7 +386,7 @@ namespace SPCtoMML
 				sampleMultipliers[array[i].Key] = Pitch.FindPitchMultiplier(array[i].Value.ToArray(), allowTuningCommand);
 			}
 		}
-		
+
 		private string processNote(Note note, int staccato)
 		{
 			int ticks = timeToTicks(note.NoteLength);
@@ -417,14 +417,23 @@ namespace SPCtoMML
 			int[] pitchData = parsePitchCachePass2(note.PitchCache);
 			int[] noteData = Pitch.FindNote(pitchData[3], sampleMultipliers[note.Sample], allowTuningCommand ? -1 : 0);
 
-			if (pitchData.Length == 8 && pitchData[4] == 3)
+			if (pitchData.Length > 4 && pitchData[4] == 3)
 			{
 				int[] noteData2 = Pitch.FindNote(pitchData[7], sampleMultipliers[note.Sample]);
 				int difference = Math.Abs(noteData2[1] - noteData[1] + (noteData2[0] - noteData[0]) * 256);
 
 				int delay = Math.Min(255, timeToTicks(pitchData[5], 2));
-				int time = Math.Min(255, timeToTicks(pitchData[6] * 2, 2));
+				int time = timeToTicks(pitchData[6], 2);
 				int amplitude;
+
+				if (time != 0)
+				{
+					time = (int)Math.Max(1, Math.Round(256 / (double)time));
+				}
+				else
+				{
+					time = 0xFF;
+				}
 
 				if (difference >= 237)
 				{
@@ -435,7 +444,11 @@ namespace SPCtoMML
 					amplitude = (int)Math.Ceiling(difference * 256 / (double)0xFC);
 				}
 
-				if (currentVibratoAmplitude != amplitude || currentVibratoDelay != delay || currentVibratoTime != time)
+				int limit = 4;
+
+				if (Math.Abs(currentVibratoAmplitude - amplitude) > limit ||
+					Math.Abs(currentVibratoDelay - delay) > limit ||
+					Math.Abs(currentVibratoTime - time) > limit)
 				{
 					currentVibratoAmplitude = amplitude;
 					currentVibratoDelay = delay;
@@ -445,7 +458,7 @@ namespace SPCtoMML
 			}
 			else
 			{
-				if (currentVibratoAmplitude != 0)
+				if (currentVibratoDelay < ticks && currentVibratoAmplitude != 0)
 				{
 					currentVibratoAmplitude = 0;
 					currentOutput.AppendFormat("$DF ");
@@ -466,21 +479,12 @@ namespace SPCtoMML
 			int lastDelay = pitchData[1];
 			int lastTime = 0;
 
-			for (int i = 4; i < pitchData.Length; i += 4)
+			for (int i = pitchData.Length > 4 && pitchData[4] == 3 ? 8 : 4; i < pitchData.Length; i += 4)
 			{
 				int delay = timeToTicks(pitchData[i + 1] - lastDelay, 2);
 				int time = Math.Min(255, timeToTicks(pitchData[i + 2] - pitchData[i + 1], 2));
 
 				int[] slideData = Pitch.FindNote(pitchData[i + 3], sampleMultipliers[currentSample], currentTuning);
-
-				if (insertedSlide)
-				{
-					delay = Math.Max(lastTime + 1, delay);
-				}
-				else if (delay < 2)
-				{
-					delay = 0;
-				}
 
 				if (lastNote == slideData[0] || time < 1)
 				{
@@ -489,6 +493,15 @@ namespace SPCtoMML
 				else if (delay >= currentTicks)
 				{
 					break;
+				}
+
+				if (delay < 2)
+				{
+					delay = 0;
+				}
+				if (insertedSlide)
+				{
+					delay = Math.Max(lastTime + 1, delay);
 				}
 
 				if (delay > 0)
@@ -500,6 +513,7 @@ namespace SPCtoMML
 						insertedDelay = true;
 					}
 				}
+
 				lastNote = slideData[0];
 				lastDelay = pitchData[i + 1];
 				lastTime = time;
@@ -516,6 +530,12 @@ namespace SPCtoMML
 			// false  true => false
 			// false false => true
 			// true  false => you're doing something wrong VV (true) (== will give false)
+
+			while (currentTicks < 2)
+			{
+				currentTicks++;
+				tickSync--;
+			}
 
 			var lengthData = getNoteLength(currentTicks, insertedSlide).Split('^');
 			currentOutput.Insert(firstLengthPosition, insertedDelay == insertedSlide ? "^" : " ");
@@ -819,12 +839,22 @@ namespace SPCtoMML
 
 			int last = cache[3];
 			int highestPitch = 0;
-			int lowestPitch = int.MaxValue;
+			int lowestPitch = last;
+			int lowestPeak = last;
+			int highestPeak = 0;
 
 			for (int i = 4; i < cache.Length; i += 4)
 			{
-				highestPitch = Math.Max(highestPitch, cache[i + 3]);
-				lowestPitch = Math.Min(lowestPitch, cache[i + 3]);
+				if (cache[i + 3] > highestPitch)
+				{
+					highestPitch = cache[i + 3];
+					highestPeak = cache[i + 2];
+				}
+				if (cache[i + 3] < lowestPitch)
+				{
+					lowestPitch = cache[i + 3];
+					lowestPeak = cache[i + 2];
+				}
 
 				int delta = Math.Abs(cache[i + 3] - last);
 				last = cache[i + 3];
@@ -841,7 +871,8 @@ namespace SPCtoMML
 				pitchDelta[delta].Add(i);
 			}
 
-			if (pitchDelta.Count > 0)
+			if (pitchDelta.Count > 0 && lowestPitch != highestPitch &&
+				lowestPitch != cache[3] && highestPitch != cache[3])
 			{
 				var topList = pitchDelta.OrderBy(x => x.Value[0]).ToArray();
 				var top = topList.Last();
@@ -856,11 +887,11 @@ namespace SPCtoMML
 					}
 
 					int delay = cache[5];
-					int time = cache[top.Value[1] + 2];
+					int time = Math.Abs(highestPeak - lowestPeak) * 2;
 					int totalTime = cache[cache.Length - 2];
 					int occurences = (cache.Length / 4 + 1);
 
-					if (delay + time * (cache.Length / 4 + 1) >= time)
+					if (delay + time * occurences >= totalTime)
 					{
 						cache2.Add(3);
 						cache2.Add(delay);
@@ -1522,23 +1553,26 @@ namespace SPCtoMML
 		private int timeToTicks(double millisecond, int mode = 0)
 		{
 			double ticks = millisecond * tempo / 512.0;
-			int intTicks = (int)Math.Round(ticks);
 
-			if (mode == 0)
+			if (mode == 2)
 			{
-				tickSync += ticks - intTicks;
-				int change = (int)Math.Round(tickSync);
-				tickSync -= change;
-				return intTicks + change;
-			}
-			else if (mode == 1)
-			{
-				tickSync += ticks - intTicks;
-				return intTicks;
+				return (int)Math.Ceiling(ticks);
 			}
 			else
 			{
-				return intTicks;
+				int intTicks = (int)Math.Round(ticks);
+				tickSync += ticks - intTicks;
+
+				if (mode == 0)
+				{
+					int change = (int)Math.Round(tickSync);
+					tickSync -= change;
+					return intTicks + change;
+				}
+				else
+				{
+					return intTicks;
+				}
 			}
 		}
 
