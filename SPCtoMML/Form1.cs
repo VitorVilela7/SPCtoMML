@@ -150,8 +150,13 @@ namespace SPCtoMML
 			//A9h - seconds - 3 bytes
 			uint seconds = 120;
 			UInt32.TryParse(ASCIIEncoding.ASCII.GetString(spcData, 0xA9, 3), out seconds);
-			seconds += seconds & 1;
-			seconds /= 2;
+			seconds = (uint)Math.Ceiling(seconds / 2.0);
+
+			if (seconds == 0)
+			{
+				seconds = 60;
+			}
+
 			textBox2.Text = seconds.ToString();
 		}
 
@@ -180,7 +185,7 @@ namespace SPCtoMML
 			if (dspTrace == null)
 			{
 				appendLine("Error: You must click \"Analyse SPC\" before exporting MML.");
-				return;
+				goto end;
 			}
 
 			appendLine("Converting traces...");
@@ -191,7 +196,7 @@ namespace SPCtoMML
 			NoteDumper noteDumper = new NoteDumper(dspTrace.TraceResult);
 			MMLDumper mmlDumper = new MMLDumper(noteDumper.OutputNoteData(), tempo);
 			progressBar.UpdateHandler(delegate() { return mmlDumper.CurrentRatio; });
-			
+
 			bool truncate = checkBox1.Checked;
 
 			if (radioButton2.Checked)
@@ -232,6 +237,7 @@ namespace SPCtoMML
 
 			appendLine("All done.");
 
+		end:
 			progressBar.Invoke((ThreadStart)delegate()
 			{
 				progressBar.Close();
