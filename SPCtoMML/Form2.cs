@@ -47,7 +47,14 @@ namespace SPCtoMML
 		/// <param name="ratio">The progress ratio.</param>
 		public void UpdateProgress(double ratio)
 		{
-			this.progressBar1.Value = (int)Math.Round(ratio * 1000);
+			try
+			{
+				this.progressBar1.Value = (int)Math.Round(ratio * 1000);
+			}
+			catch
+			{
+				this.progressBar1.Value = 0;
+			}
 		}
 
 		private void Form2_FormClosing(object sender, FormClosingEventArgs e)
