@@ -399,10 +399,12 @@ namespace SPCtoMML
 				{
 					if (voiceInactive[ch] != -1)
 					{
+						finishCache();
 						handleRest();
 					}
 					else if (voiceActive[ch] != -1)
 					{
+						finishCache();
 						handleNote(false);
 					}
 
