@@ -692,9 +692,10 @@ namespace SPCtoMML
 			}
 
 			// merge if last pitch cache is very early.
-			if (pitchCache[ch].Count > 1 && timer - pitchCache[ch].Last() < 4)
+			if (pitchCache[ch].Count > 1 && timer - pitchCache[ch].Last() < 3)
 			{
 				pitchCache[ch][pitchCache[ch].Count - 2] = currentPitch[ch];
+				pitchCache[ch][pitchCache[ch].Count - 1] = timer;
 			}
 			else
 			{
@@ -712,9 +713,10 @@ namespace SPCtoMML
 			}
 
 			// merge if last volume cache is very early.
-			if (volumeCache[ch].Count > 1 && timer - volumeCache[ch].Last() < 4)
+			if (volumeCache[ch].Count > 1 && timer - volumeCache[ch].Last() < 3)
 			{
 				volumeCache[ch][volumeCache[ch].Count - 2] = currentVolume[ch];
+				volumeCache[ch][volumeCache[ch].Count - 2] = timer;
 			}
 			else
 			{
@@ -732,9 +734,10 @@ namespace SPCtoMML
 			}
 
 			// merge if last gain cache is very early.
-			if (envelopeCache[ch].Count > 1 && timer - envelopeCache[ch].Last() < 4)
+			if (envelopeCache[ch].Count > 1 && timer - envelopeCache[ch].Last() < 3)
 			{
 				envelopeCache[ch][envelopeCache[ch].Count - 2] = currentEnvelope[ch];
+				envelopeCache[ch][envelopeCache[ch].Count - 2] = timer;
 			}
 			else
 			{
