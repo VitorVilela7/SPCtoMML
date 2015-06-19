@@ -121,6 +121,8 @@ namespace SPCtoMML
 		/// <returns></returns>
 		public static int[] FindNote(int pitch, int multiplier8x8, int defaultTuning = -1)
 		{
+			pitch &= 0x3FFF;
+
 			int note, tuning;
 			int distance = pitch;
 
@@ -148,6 +150,11 @@ namespace SPCtoMML
 			}
 
 			--note;
+
+			if (note == -1)
+			{
+				return new[] { 0, 0, distance, pitch };
+			}
 
 			if (lockTuning)
 			{
