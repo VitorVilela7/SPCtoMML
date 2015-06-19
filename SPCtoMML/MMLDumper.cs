@@ -435,6 +435,11 @@ namespace SPCtoMML
 					time = 0xFF;
 				}
 
+				if (time > 0xFF)
+				{
+					time = 0xFF;
+				}
+
 				if (difference >= 237)
 				{
 					amplitude = ((difference / 0xFC) & 15) + 0xF0;
@@ -507,9 +512,13 @@ namespace SPCtoMML
 				if (delay > 0)
 				{
 					currentOutput.Append(getNoteLength(delay, true));
-					currentOutput.Append(" ");
+
 					if (!insertedSlide)
 					{
+						if (!insertedDelay)
+						{
+							firstLengthPosition = currentOutput.Length;
+						}
 						insertedDelay = true;
 					}
 				}
@@ -518,7 +527,14 @@ namespace SPCtoMML
 				lastDelay = pitchData[i + 1];
 				lastTime = time;
 
-				currentOutput.AppendFormat("$DD ${0:X2} ${1:X2} ${2:X2} ", 0, time, slideData[0] | 0x80);
+				string noteString = notes[slideData[0] % 12];
+				if (currentOctave != slideData[0] / 12)
+				{
+					//currentOctave = slideData[0] / 12;
+					noteString = "o" + (slideData[0] + 1) + noteString;
+				}
+
+				currentOutput.AppendFormat(" $DD ${0:X2} ${1:X2} ${3:X2} ", 0, time, noteString, slideData[0] | 0x80);
 				currentOutput.Append("^");
 
 				currentTicks -= delay;
@@ -538,8 +554,11 @@ namespace SPCtoMML
 			}
 
 			var lengthData = getNoteLength(currentTicks, insertedSlide).Split('^');
-			currentOutput.Insert(firstLengthPosition, insertedDelay == insertedSlide ? "^" : " ");
+			if (lengthData.Length > 1 && !insertedSlide)
+				currentOutput.Insert(firstLengthPosition, insertedDelay == insertedSlide ? "^" : "");
 			currentOutput.Insert(firstLengthPosition, lengthData[0]);
+			if (insertedSlide)
+				currentOutput.Insert(firstLengthPosition, insertedDelay == insertedSlide ? "^" : "");
 			currentOutput.Append(String.Join("^", lengthData, 1, lengthData.Length - 1));
 
 			removeLastChar('^');
@@ -837,24 +856,24 @@ namespace SPCtoMML
 
 			Dictionary<int, List<int>> pitchDelta = new Dictionary<int, List<int>>();
 
+			SortedDictionary<int, int> pitchMap = new SortedDictionary<int, int>();
+			SortedDictionary<int, List<int>> pitchHeat = new SortedDictionary<int, List<int>>();
+
 			int last = cache[3];
-			int highestPitch = 0;
-			int lowestPitch = last;
-			int lowestPeak = last;
-			int highestPeak = 0;
 
 			for (int i = 4; i < cache.Length; i += 4)
 			{
-				if (cache[i + 3] > highestPitch)
+				int pitch = cache[i + 3];
+				int timer = cache[i + 2];
+
+				if (!pitchMap.ContainsKey(pitch))
 				{
-					highestPitch = cache[i + 3];
-					highestPeak = cache[i + 2];
+					pitchMap[pitch] = 0;
+					pitchHeat[pitch] = new List<int>();
 				}
-				if (cache[i + 3] < lowestPitch)
-				{
-					lowestPitch = cache[i + 3];
-					lowestPeak = cache[i + 2];
-				}
+
+				pitchMap[pitch]++;
+				pitchHeat[pitch].Add(timer);
 
 				int delta = Math.Abs(cache[i + 3] - last);
 				last = cache[i + 3];
@@ -871,8 +890,49 @@ namespace SPCtoMML
 				pitchDelta[delta].Add(i);
 			}
 
-			if (pitchDelta.Count > 0 && lowestPitch != highestPitch &&
-				lowestPitch != cache[3] && highestPitch != cache[3])
+			var map2 = pitchMap.Where(x => x.Value > 1).OrderBy(x => x.Key).ToArray();
+
+			if (map2.Length == 0)
+			{
+				return cache;
+			}
+			else if (map2.Length == 1)
+			{
+				map2 = pitchMap.OrderBy(x => x.Key).ToArray();
+			}
+
+			int lowestPitch = map2.First().Key;
+			int highestPitch = map2.Last().Key;
+			int frequency;
+
+			if (pitchHeat[lowestPitch].Count > 1 && pitchHeat[highestPitch].Count > 1)
+			{
+				var low = pitchHeat[lowestPitch];
+				var high = pitchHeat[highestPitch];
+
+				int count = 0;
+				frequency = 0;
+
+				for (int i = 1; i < low.Count; ++i, ++count)
+				{
+					frequency += Math.Abs(low[i - 1] - low[i]);
+				}
+				for (int i = 1; i < high.Count; ++i, ++count)
+				{
+					frequency += Math.Abs(high[i - 1] - high[i]);
+				}
+
+				if (count != 0)
+				{
+					frequency /= count;
+				}
+			}
+			else
+			{
+				frequency = Math.Abs(pitchHeat[lowestPitch][0] - pitchHeat[highestPitch][0]) * 2;
+			}
+
+			if (pitchDelta.Count > 0)
 			{
 				var topList = pitchDelta.OrderBy(x => x.Value[0]).ToArray();
 				var top = topList.Last();
@@ -887,15 +947,14 @@ namespace SPCtoMML
 					}
 
 					int delay = cache[5];
-					int time = Math.Abs(highestPeak - lowestPeak) * 2;
 					int totalTime = cache[cache.Length - 2];
 					int occurences = (cache.Length / 4 + 1);
 
-					if (delay + time * occurences >= totalTime)
+					if (delay + frequency * occurences >= totalTime)
 					{
 						cache2.Add(3);
 						cache2.Add(delay);
-						cache2.Add(time);
+						cache2.Add(frequency);
 						cache2.Add(cache[3] + (highestPitch - lowestPitch) / 2);
 						return cache2.ToArray();
 					}
@@ -1237,11 +1296,11 @@ namespace SPCtoMML
 				List<int> envelopes = new List<int>();
 				List<int> triggers = new List<int>();
 
-				for (int i = 3; i < gainCache.Length; i += 2)
+				for (int i = 1; i < gainCache.Length; i += 2)
 				{
 					int temp = timeToTicks(gainCache[i], 2);
 
-					if (temp + 2 < length)
+					if (temp < length)
 					{
 						triggers.Add(temp);
 						envelopes.Add(gainCache[i - 1]);
@@ -1261,12 +1320,13 @@ namespace SPCtoMML
 					staccato += length - trigger;
 					length = trigger;
 				}
+
 			}
 			else if (currentEnvelope != envelope)
 			{
 				disableRemoteCommand();
 				currentEnvelope = envelope;
-				currentOutput.Append(convertEnvelope(envelope));
+				currentOutput.Append(convertEnvelope(currentEnvelope));
 				currentOutput.Append(' ');
 			}
 		}
@@ -1558,21 +1618,21 @@ namespace SPCtoMML
 			{
 				return (int)Math.Ceiling(ticks);
 			}
+			else if (mode == 1)
+			{
+				int intTicks = (int)Math.Floor(ticks);
+				tickSync += ticks - intTicks;
+
+				return intTicks;
+			}
 			else
 			{
 				int intTicks = (int)Math.Round(ticks);
 				tickSync += ticks - intTicks;
 
-				if (mode == 0)
-				{
-					int change = (int)Math.Round(tickSync);
-					tickSync -= change;
-					return intTicks + change;
-				}
-				else
-				{
-					return intTicks;
-				}
+				int change = (int)tickSync;
+				tickSync -= change;
+				return intTicks + change;
 			}
 		}
 
