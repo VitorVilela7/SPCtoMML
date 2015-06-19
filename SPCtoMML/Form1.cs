@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
+using System.IO;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using AM4Play.SNESAPU;
-using System.IO;
-using System.Threading;
-using System.Diagnostics;
 
 namespace SPCtoMML
 {
@@ -25,6 +19,7 @@ namespace SPCtoMML
 			InitializeComponent();
 			this.Text = Program.GetProgramName();
 			this.player = new TracePlayer();
+			this.Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 		}
 
 		private void startPlayer()
@@ -57,6 +52,11 @@ namespace SPCtoMML
 
 		private void reloadSong()
 		{
+			if (spcData == null)
+			{
+				throw new Exception("You must load a SPC file before proceeding.");
+			}
+
 			APU.ResetAPU(0xFFFFFFFF);
 			APU.LoadSPCFile(spcData);
 		}
@@ -102,13 +102,66 @@ namespace SPCtoMML
 		{
 			if (openFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
 			{
-				stopPlayer();
-				spcData = File.ReadAllBytes(openFileDialog1.FileName);
-				reloadSong();
 				resetLog();
-				loadSPCInfo();
-				appendLine("Ready to analyze SPC file.");
+
+				try
+				{
+					stopPlayer();
+					spcData = loadSPC(openFileDialog1.FileName);
+					reloadSong();
+					loadSPCInfo();
+					appendLine("Ready to analyze SPC file.");
+				}
+				catch(Exception ex)
+				{
+					spcData = null;
+					appendLine("Can't load SPC file: {0} ", ex.Message);
+				}
 			}
+		}
+
+		private byte[] loadSPC(string path)
+		{
+			byte[] data = File.ReadAllBytes(path);
+
+			byte[] moreBin1 = {
+				0x2F, 0x04, 0x5B, 0x04, 0x68, 0x04, 0x9A, 0x04, 0x3F, 0x5C, 0x12, 0x30,
+				0x1B, 0xC4, 0x10, 0xE4, 0x46, 0x9F, 0x5C, 0x08, 0x06, 0x2D, 0x9C, 0x2D,
+			};
+
+			byte[] moreBin2 = {
+				0x47, 0x0D, 0x8E, 0x0D, 0xA5, 0x0D, 0x00, 0x00, 0xC1, 0x0D, 0xD5, 0x0D,
+				0xF0, 0x0D, 0xFC, 0x0D, 0x11, 0x0E, 0x1D, 0x0E, 0x35, 0x0E, 0x3B, 0x0E,
+			};
+			
+			byte[] moreBin3 = {
+				0x20, 0xCD, 0xCF, 0xBD, 0xE8, 0x00, 0x8D, 0x00, 0xD6, 0x00, 0x01, 0xFE,
+				0xFB, 0xD6, 0x00, 0x02, 0xFE, 0xFB, 0xD6, 0x00, 0x03, 0xFE, 0xFB, 0xDA,
+			};
+
+			byte[] moreBin4 = {
+				0x8F, 0x5F, 0xE3, 0xF8, 0x46, 0xF4, 0xC1, 0x30, 0x08, 0x8D, 0x05, 0x9C,
+				0x8F, 0x46, 0xE2, 0x2F, 0x08, 0x8F, 0xA5, 0xE2, 0x8D, 0x06, 0x80, 0xA8,
+			};
+
+			verifyData(ref moreBin1, ref data, 0x500);
+			verifyData(ref moreBin2, ref data, 0x500);
+			verifyData(ref moreBin3, ref data, 0x500);
+			verifyData(ref moreBin4, ref data, 0x500);
+			return data;
+		}
+
+		private void verifyData(ref byte[] binData, ref byte[] data, int offset)
+		{
+			for (int i = 0; i < binData.Length; ++i)
+			{
+				if (data[i + offset] != binData[i])
+				{
+					return;
+				}
+			}
+
+			throw new Exception("Not supported file format.");
 		}
 
 		private void button2_Click(object sender, EventArgs e)
@@ -119,9 +172,19 @@ namespace SPCtoMML
 			}
 			executing = true;
 			stopPlayer();
-
-			reloadSong();
 			resetLog();
+
+			try
+			{
+				reloadSong();
+			}
+			catch(Exception ex)
+			{
+				appendLine("Error: {0}", ex.Message);
+				executing = false;
+				return;
+			}
+
 			appendLine("Started thread...");
 			appendLine("");
 
@@ -247,6 +310,13 @@ namespace SPCtoMML
 
 		private void button5_Click(object sender, EventArgs e)
 		{
+			if (dspTrace == null)
+			{
+				resetLog();
+				appendLine("Error: You must analyze SPC before proceeding.");
+				return;
+			}
+
 			if (playingState)
 			{
 				stopPlayer();
@@ -311,7 +381,7 @@ namespace SPCtoMML
 
 			if (dspTrace == null)
 			{
-				appendLine("Error: You must click \"Analyse SPC\" before exporting BRR samples.");
+				appendLine("Error: You must click \"Analyze SPC\" before exporting BRR samples.");
 			}
 			else
 			{
