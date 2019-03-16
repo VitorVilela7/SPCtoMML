@@ -266,11 +266,17 @@ namespace SPCtoMML
 									}
 								}
 							}
-						}
+                        }
 
-						// add timer changes. FF XX
-						// where XX is the time changed in milliseconds.
-						while (diff >= 64 * 256)
+                        // round value
+                        if (diff % 64 >= 32)
+                        {
+                            diff += 32;
+                        }
+
+                        // add timer changes. FF XX
+                        // where XX is the time changed in milliseconds.
+                        while (diff >= 64 * 256)
 						{
 							dspChanges.Add(0xFF);
 							dspChanges.Add(0xFF);
