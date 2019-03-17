@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SPCtoMML
 {
-	public class Pitch
+	public class PitchCalculator
 	{
 		private int[] pitchTable = new int[] {
                 0x085f, 0x08de, 0x0965, 0x09f4,

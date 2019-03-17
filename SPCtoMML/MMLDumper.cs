@@ -12,7 +12,7 @@ namespace SPCtoMML
 
         private Staccato staccatoSystem;
         private BeatCalculator beatCalculator;
-        private Pitch pitchCalculator;
+        private PitchCalculator pitchCalculator;
 
         private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
 		private static Dictionary<int, int[]> findVolumeCache = new Dictionary<int, int[]>();
@@ -254,7 +254,7 @@ namespace SPCtoMML
 
 		public void SetUpSampleMultiplier()
 		{
-            pitchCalculator = new Pitch();
+            pitchCalculator = new PitchCalculator();
 
 			Dictionary<int, List<int>> pitchesPerSample = new Dictionary<int, List<int>>();
 

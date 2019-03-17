@@ -16,7 +16,7 @@ namespace SPCtoMMLTests
             2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604 // o6
         };
 
-        Pitch pitchCalculator = new Pitch();
+        PitchCalculator pitchCalculator = new PitchCalculator();
 
         [TestMethod]
         public void FundamentalMultiplierTest()
