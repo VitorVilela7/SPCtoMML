@@ -9,13 +9,13 @@ namespace SPCtoMML
     public class Staccato
     {
         private static readonly byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
-        private Dictionary<int, List<StaccatoPointer>> durationMap;
-        private StaccatoPointer[] maxStaccato;
+        private Dictionary<int, List<Pointer>> durationMap;
+        private Pointer[] maxStaccato;
 
         public Staccato()
         {
-            durationMap = new Dictionary<int, List<StaccatoPointer>>();
-            var maxStaccatoList = new List<StaccatoPointer>();
+            durationMap = new Dictionary<int, List<Pointer>>();
+            var maxStaccatoList = new List<Pointer>();
 
             for (int d = 0; d < 8; d++)
             {
@@ -26,10 +26,10 @@ namespace SPCtoMML
 
                     if (!durationMap.ContainsKey(real))
                     {
-                        durationMap[real] = new List<StaccatoPointer>();
+                        durationMap[real] = new List<Pointer>();
                     }
 
-                    var pointer = new StaccatoPointer { Duration = real, Staccato = staccato, Index = d };
+                    var pointer = new Pointer { Duration = real, Staccato = staccato, Index = d };
 
                     if (i == 0x80)
                     {
@@ -46,9 +46,9 @@ namespace SPCtoMML
             maxStaccato = maxStaccatoList.ToArray();
         }
 
-        public StaccatoPointer[] FindStaccatoGivenDuration(int realDuration)
+        public Pointer[] FindStaccatoGivenDuration(int realDuration)
         {
-            var output = new List<StaccatoPointer>();
+            var output = new List<Pointer>();
 
             if (durationMap.ContainsKey(realDuration))
             {
@@ -95,7 +95,7 @@ namespace SPCtoMML
             return stacTicks;
         }
 
-        public class StaccatoPointer
+        public class Pointer
         {
             public int Duration { get; set; }
             public int Staccato { get; set; }

@@ -502,7 +502,7 @@ namespace SPCtoMML
             Debug.WriteLine($"Before stac: {staccato} {length}");
 
             var list = staccatoSystem.FindStaccatoGivenDuration(length);
-            Staccato.StaccatoPointer pickedStaccato = null;
+            Staccato.Pointer pickedStaccato = null;
 
             foreach (var item in list)
             {
