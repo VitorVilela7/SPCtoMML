@@ -10,8 +10,11 @@ namespace SPCtoMML
     {
         const bool allowDots = true;
 
-        private static readonly byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
-		private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
+        private Staccato staccatoSystem;
+        private BeatCalculator beatCalculator;
+        private Pitch pitchCalculator;
+
+        private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
 		private static Dictionary<int, int[]> findVolumeCache = new Dictionary<int, int[]>();
 
 		private int ticksToBreakSection = 48;
@@ -79,8 +82,6 @@ namespace SPCtoMML
 		// handlers ticks, tick compensation
 		private double tickSync;
 		private int totalTicks;
-		private int lastNoteLength;
-		private int lastStaccato;
 		private int lastNoteDur;
 
 		private bool updateQ;
@@ -131,6 +132,7 @@ namespace SPCtoMML
 		public void CreateStaccatoMap()
 		{
 			staccato = new int[noteData.Length][];
+            staccatoSystem = new Staccato();
 
 			for (int ch = 0; ch < noteData.Length; ++ch)
 			{
@@ -159,6 +161,8 @@ namespace SPCtoMML
 
 		public int CalculateTempo()
         {
+            beatCalculator = new BeatCalculator();
+
             var tempList = new List<int>();
 
             for (int c = 0; c < 8; c++)
@@ -195,8 +199,7 @@ namespace SPCtoMML
                 }
             }
             
-            BeatCalculator bc = new BeatCalculator();
-            int foundTempo = bc.FindTempo(tempList.ToArray(), 2);
+            int foundTempo = beatCalculator.FindTempo(tempList.ToArray(), 2);
 
             tempo = foundTempo;
             insertTempo = true;
@@ -251,6 +254,8 @@ namespace SPCtoMML
 
 		public void SetUpSampleMultiplier()
 		{
+            pitchCalculator = new Pitch();
+
 			Dictionary<int, List<int>> pitchesPerSample = new Dictionary<int, List<int>>();
 
 			foreach (var ch in noteData.Where(n => n != null))
@@ -274,7 +279,7 @@ namespace SPCtoMML
 			for (int i = 0; i < array.Length; ++i)
 			{
 				CurrentRatio = 0.1 + i / (double)array.Length * 9.0 / 10.0;
-				sampleMultipliers[array[i].Key] = Pitch.FindPitchMultiplier(array[i].Value.ToArray(), allowTuningCommand);
+				sampleMultipliers[array[i].Key] = pitchCalculator.FindPitchMultiplier(array[i].Value.ToArray(), allowTuningCommand);
 			}
 		}
 
@@ -302,15 +307,15 @@ namespace SPCtoMML
 			mmlEchoUpdate();
 			mmlSampleUpdate(note.Sample, note.GainCache[0]);
 			mmlNoiseUpdate(note.UseNoise, note.Sample, note.GainCache[0]);
-			mmlEnvelopeUpdate(note.GainCache, ref ticks, ref stacTicks);
+			//mmlEnvelopeUpdate(note.GainCache, ref ticks, ref stacTicks);
 			mmlVolumeUpdate(note.VolumeCache[0]);
 
 			int[] pitchData = parsePitchCachePass2(note.PitchCache);
-			int[] noteData = Pitch.FindNote(pitchData[3], sampleMultipliers[note.Sample], allowTuningCommand ? -1 : 0);
+			int[] noteData = pitchCalculator.FindNote(pitchData[3], sampleMultipliers[note.Sample], allowTuningCommand ? -1 : 0);
 
 			if (pitchData.Length > 4 && pitchData[4] == 3)
 			{
-				int[] noteData2 = Pitch.FindNote(pitchData[7], sampleMultipliers[note.Sample]);
+				int[] noteData2 = pitchCalculator.FindNote(pitchData[7], sampleMultipliers[note.Sample]);
 				int difference = Math.Abs(noteData2[1] - noteData[1] + (noteData2[0] - noteData[0]) * 256);
 
 				int delay = Math.Min(255, timeToTicks(pitchData[5], 2));
@@ -380,7 +385,7 @@ namespace SPCtoMML
 				int delay = timeToTicks(pitchData[i + 1] - lastDelay, 2);
 				int time = Math.Min(255, timeToTicks(pitchData[i + 2] - pitchData[i + 1], 2));
 
-				int[] slideData = Pitch.FindNote(pitchData[i + 3], sampleMultipliers[currentSample], currentTuning);
+				int[] slideData = pitchCalculator.FindNote(pitchData[i + 3], sampleMultipliers[currentSample], currentTuning);
 
 				if (lastNote == slideData[0] || time < 1)
 				{
@@ -490,77 +495,52 @@ namespace SPCtoMML
 
 			allowQuant &= allowAdvancedStaccato;
 
-			//noteDurations
-			int bestDiff = staccato - 2;
-			int noteDur = 7;
-			int newTicks = length + 2;
-			int newRest = staccato - 2;
-			double oldTickSync = tickSync;
+            // TO DO...
+            int noteDur = 0;
+            int bestDiff = int.MaxValue;
 
-			if (length > 127)
-			{
-				goto skip;
-			}
+            Debug.WriteLine($"Before stac: {staccato} {length}");
 
-			for (int d = 6; d >= 0 && allowQuant; --d)
-			{
-				// length = total *durations[d]/0x100 - 1
-				// length + 1 = total * duration[d] / 0x100
-				// (length + 1) * 0x100 = total * duration[d]
-				// (length + 1) * 0x100 / duration[d] = total
+            var list = staccatoSystem.FindStaccatoGivenDuration(length);
+            Staccato.StaccatoPointer pickedStaccato = null;
 
-				int simulatedTotal = (int)Math.Ceiling((length + 1) * 0x100 / (double)noteDurations[d]);
-				int simulatedStaccato = simulatedTotal - length;
-				int difference = staccato - simulatedStaccato;
+            foreach (var item in list)
+            {
+                if (staccato - item.Staccato < bestDiff && item.Staccato <= staccato)
+                {
+                    bestDiff = staccato - item.Staccato;
+                    pickedStaccato = item;
+                }
+                else if (staccato - item.Staccato == bestDiff && item.Index == lastNoteDur)
+                {
+                    pickedStaccato = item;
+                }
+            }
 
-				if (Math.Abs(difference) < bestDiff && difference >= 0 && simulatedTotal < 128)
-				{
-					bestDiff = Math.Abs(difference);
-					noteDur = d;
-					newTicks = length + simulatedStaccato;
-					newRest = staccato - simulatedStaccato;
-					if (difference == 0)
-					{
-						break;
-					}
-				}
-			}
+            if (pickedStaccato == null)
+            {
+                foreach (var item in list)
+                {
+                    if (Math.Abs(staccato - item.Staccato) < bestDiff)
+                    {
+                        bestDiff = Math.Abs(staccato - item.Staccato);
+                        pickedStaccato = item;
+                    }
+                    else if (Math.Abs(staccato - item.Staccato) == bestDiff && item.Index == lastNoteDur)
+                    {
+                        pickedStaccato = item;
+                    }
+                }
+            }
 
-			skip:
-			length = newTicks;
-			staccato = newRest;
-			if (staccato == 1 && truncateSmallRests)
-			{
-				staccato = 0;
-				tickSync++;
-			}
-			else
-			{
-				while (staccato < 0)
-				{
-					tickSync -= 1;
-					staccato++;
-				}
-			}
+            staccato -= pickedStaccato.Staccato;
+            length += pickedStaccato.Staccato;
+            noteDur = pickedStaccato.Index;
 
-			int l = lastNoteLength;
-			int s = lastStaccato;
-			if (l == -1)
-			{
-				l = length;
-			}
-			lastNoteLength = length;
-			lastStaccato = staccato;
+            Debug.WriteLine($"After stac: {staccato} {length}");
+            Debug.WriteLine($"Verify: {staccatoSystem.FindStaccatoTicks(length, noteDur)} == {pickedStaccato.Staccato}");
 
-			if (Math.Abs(length - l) <= 2)
-			{
-				//tickSync = oldTickSync + defaultLength - l;
-				//length = l;
-				//noteDur = lastNoteDur;
-				//staccato = s;
-			}
-
-			if (updateQ || lastNoteDur != noteDur)
+            if (updateQ || lastNoteDur != noteDur)
 			{
 				updateQ = false;
 				lastNoteDur = noteDur;
@@ -952,8 +932,6 @@ namespace SPCtoMML
 
 			tickSync = 0;
 			totalTicks = 0;
-			lastNoteLength = -1;
-			lastStaccato = -1;
 			lastNoteDur = 7;
 			updateQ = false;
 
@@ -1522,8 +1500,19 @@ namespace SPCtoMML
 				tickSync += ticks - intTicks;
 
 				int change = (int)tickSync;
-				tickSync -= change;
-				return intTicks + change;
+
+                double score1 = beatCalculator.RateDuration(intTicks);
+                double score2 = beatCalculator.RateDuration(intTicks + change);
+
+                if (score2 > score1)
+                {
+                    tickSync -= change;
+                    return intTicks + change;
+                }
+                else
+                {
+                    return intTicks;
+                }
 			}
 		}
 

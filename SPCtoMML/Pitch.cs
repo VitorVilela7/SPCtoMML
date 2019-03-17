@@ -5,9 +5,9 @@ using System.Text;
 
 namespace SPCtoMML
 {
-	static class Pitch
+	public class Pitch
 	{
-		static int[] pitchTable = new int[] {
+		private int[] pitchTable = new int[] {
                 0x085f, 0x08de, 0x0965, 0x09f4,
                 0x0a8c, 0x0b2c, 0x0bd6, 0x0c8b,
                 0x0d4a, 0x0e14, 0x0eea, 0x0fcd,
@@ -21,7 +21,7 @@ namespace SPCtoMML
 		/// <param name="tuning">The tuning ($EE)</param>
 		/// <param name="multiplier8x8">The pitch multiplier in 8.8 fixed point</param>
 		/// <returns></returns>
-		public static int FindPitch(int note, int tuning, int multiplier8x8)
+		public int FindPitch(int note, int tuning, int multiplier8x8)
 		{
 			if (note >= 0x34)
 			{
@@ -51,7 +51,7 @@ namespace SPCtoMML
 		/// </summary>
 		/// <param name="pitches"></param>
 		/// <returns></returns>
-		public static int FindPitchMultiplier(int[] pitches, bool allowTuning)
+		public int FindPitchMultiplier(int[] pitches, bool allowTuning)
 		{
 			int maximumPitch = FindPitch(0x45, 0, 0x0100);
 			int minMultiplier = 0x0100;
@@ -119,7 +119,7 @@ namespace SPCtoMML
 		/// <param name="pitch"></param>
 		/// <param name="multiplier8x8"></param>
 		/// <returns></returns>
-		public static int[] FindNote(int pitch, int multiplier8x8, int defaultTuning = -1)
+		public int[] FindNote(int pitch, int multiplier8x8, int defaultTuning = -1)
 		{
 			pitch &= 0x3FFF;
 
