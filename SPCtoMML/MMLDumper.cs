@@ -7,8 +7,10 @@ using System.Diagnostics;
 namespace SPCtoMML
 {
 	class MMLDumper
-	{
-		private static readonly byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
+    {
+        const bool allowDots = true;
+
+        private static readonly byte[] noteDurations = { 0x33, 0x66, 0x80, 0x99, 0xB3, 0xCC, 0xE6, 0xFF };
 		private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
 		private static Dictionary<int, int[]> findVolumeCache = new Dictionary<int, int[]>();
 
@@ -85,7 +87,7 @@ namespace SPCtoMML
 
 		private int[] masterVolume = new int[2];
 		
-		private double tempo;
+		private int tempo;
 		private bool insertTempo;
 
 		private Note[][] noteData;
@@ -96,11 +98,11 @@ namespace SPCtoMML
 		/// </summary>
 		public double CurrentRatio { get; private set; }
 
-		public MMLDumper(Note[][] noteData, int defaultTempo)
+		public MMLDumper(Note[][] data, int defaultTempo)
 		{
-			this.noteData = noteData;
-			this.tempo = defaultTempo;
-			this.insertTempo = true;
+			noteData = data;
+			tempo = defaultTempo;
+			insertTempo = true;
 		}
 
 		public void SetupPitch(bool tuning, bool vibrato)
@@ -132,7 +134,10 @@ namespace SPCtoMML
 
 			for (int ch = 0; ch < noteData.Length; ++ch)
 			{
-				if (noteData[ch] == null)
+                // Update progress bar
+                CurrentRatio = ch / (double)noteData.Length;
+
+                if (noteData[ch] == null)
 				{
 					continue;
 				}
@@ -142,176 +147,62 @@ namespace SPCtoMML
 
 				for (int n = 1; n < staccato[ch].Length; ++n)
 				{
-					CurrentRatio = (n / (double)staccato[ch].Length) * (ch / (double)noteData.Length);
 					if (noteData[ch][n].IsRest && !rest)
 					{
 						staccato[ch][n - 1] = noteData[ch][n].NoteLength;
 					}
+
 					rest = noteData[ch][n].IsRest;
 				}
 			}
 		}
 
 		public int CalculateTempo()
-		{
-			int totalTime = 0;
-			int beats = 0;
-			Dictionary<int, int> staccatos = new Dictionary<int, int>();
+        {
+            var tempList = new List<int>();
 
-			for (int c = 0; c < noteData.Length; ++c)
-			{
-				if (noteData[c] == null)
-				{
-					continue;
-				}
+            for (int c = 0; c < 8; c++)
+            {
+                if (noteData[c] == null)
+                {
+                    continue;
+                }
 
-				for (int n = 0; n < noteData[c].Length; n += staccato[c][n] > 0 ? 2 : 1)
-				{
-					CurrentRatio = (n / (double)noteData[c].Length) * (c / (double)noteData.Length);
-					if (noteData[c][n].IsRest)
-					{
-						totalTime += noteData[c][n].NoteLength;
-					}
-					else
-					{
-						if (!staccatos.ContainsKey(staccato[c][n]))
-						{
-							staccatos[staccato[c][n]] = 0;
-						}
+                int current = 0;
+                int noteCount = 0;
 
-						staccatos[staccato[c][n]]++;
-						totalTime += noteData[c][n].NoteLength;
-						totalTime += staccato[c][n];
-						beats++;
-					}
-				}
-			}
+                for (int i = 0; i < noteData[c].Length; i++)
+                {
+                    if (noteData[c][i].IsRest)
+                    {
+                        if (noteCount > 1)
+                        {
+                            tempList.Add(current + noteData[c][i].NoteLength);
+                        }
 
-			int tempo = (int)Math.Round((double)beats * 60000.0 * 256.0 / (double)totalTime / 625.0);
+                        current = 0;
+                    }
+                    else
+                    {
+                        noteCount++;
+                        current = noteData[c][i].NoteLength;
+                    }
+                }
 
-			int minStaccato = staccatos.OrderBy(x => x.Value).LastOrDefault().Key;
-			int oldTempo = tempo;
-			int realMinStaccato = minStaccato * tempo >> 9;
+                if (current != 0 && noteCount > 1)
+                {
+                    tempList.Add(current);
+                }
+            }
+            
+            BeatCalculator bc = new BeatCalculator();
+            int foundTempo = bc.FindTempo(tempList.ToArray(), 2);
 
-			if (realMinStaccato < 10 && realMinStaccato != 0)
-			{
-				if (realMinStaccato < 2)
-				{
-					while ((realMinStaccato = minStaccato * ++tempo >> 9) < 2) ;
-				}
-				else
-				{
-					while ((realMinStaccato = minStaccato * --tempo >> 9) > 2) ;
-				}
-			}
-
-			while (tempo > 100)
-			{
-				tempo >>= 1;
-			}
-
-			this.tempo = tempo;
-			this.insertTempo = true;
-			return tempo;
-		}
-
-		//public int CalculateTempo()
-		//{
-		//    double score = double.MaxValue;
-		//    int tempo = 1; // t1 to t254
-
-		//    for (int t = 1; t < 255; ++t)
-		//    {
-		//        double currentScore = 0;
-		//        double diff = 0;
-
-		//        foreach (var ch in noteData.Where(x => x != null))
-		//        {
-		//            int[] staccato = new int[ch.Length];
-		//            bool rest = ch[0].IsRest;
-
-		//            for (int n = 1; n < staccato.Length; ++n)
-		//            {
-		//                if (ch[n].IsRest && !rest)
-		//                {
-		//                    staccato[n - 1] = ch[n].NoteLength;
-		//                }
-		//                rest = ch[n].IsRest;
-		//            }
-
-		//            for (int n = 0; n < ch.Length; n += staccato[n] > 0 ? 2 : 1)
-		//            {
-		//                Note note = ch[n];
-		//                note.NoteLength += staccato[n] * 2;
-
-		//                double ticks = note.NoteLength * t / 512.0;
-		//                int intTicks = (int)Math.Round(ticks);
-		//                //diff += ticks - intTicks;
-		//                if (diff >= 1)
-		//                {
-		//                    intTicks++;
-		//                    diff--;
-		//                }
-		//                int accuracy = (512 * intTicks / t) * 100 / note.NoteLength;
-		//                if (accuracy > 100)
-		//                {
-		//                    accuracy = Math.Max(0, 200 - accuracy);
-		//                }
-
-		//                accuracy = 100 - accuracy;
-		//                for (int i = 0; accuracy > 0; i += 2)
-		//                {
-		//                    currentScore += i;
-		//                    accuracy -= 20;
-		//                }
-
-		//                //if (accuracy > 90)
-		//                //{
-		//                //    currentScore -= 2;
-		//                //}
-		//                //if (accuracy < 70)
-		//                //{
-		//                //    if (accuracy < 50)
-		//                //    {
-		//                //        currentScore += 4;
-		//                //        if (accuracy < 30)
-		//                //        {
-		//                //            currentScore += 8;
-		//                //        }
-		//                //    }
-		//                //    currentScore += 2;
-		//                //}
-
-		//                if (intTicks == 0)
-		//                {
-		//                    currentScore += 2;
-		//                }
-		//                else if (192 % intTicks == 0)
-		//                {
-		//                    currentScore -= 2;
-		//                }
-		//                else if (192 % (192 % intTicks) == 0)
-		//                {
-		//                    currentScore -= 1;
-		//                }
-		//            }
-		//        }
-
-		//        // the higher the tempo, higher slowdown chance.
-		//        currentScore += Math.Pow(t, 1.2);
-
-		//        if (currentScore < score)
-		//        {
-		//            score = currentScore;
-		//            tempo = t;
-		//        }
-		//    }
-
-		//    this.tempo = tempo;
-		//    this.insertTempo = true;
-		//    return tempo;
-		//}
-
+            tempo = foundTempo;
+            insertTempo = true;
+            return foundTempo;
+        }
+        
 		public string OutputMML()
 		{
 			StringBuilder finalOutput = new StringBuilder();
@@ -1517,7 +1408,7 @@ namespace SPCtoMML
 				return (192 / ticks).ToString();
 			}
 
-			while (dotCandidate < 192 && dotCount == 0)
+			while (dotCandidate < 192 && dotCount == 0 && allowDots)
 			{
 				// should return 2, 3, 4, 6, 8, 12, 16, etc.
 				while ((192 / ++dotCandidate > ticks || 192 % dotCandidate != 0)) ;
