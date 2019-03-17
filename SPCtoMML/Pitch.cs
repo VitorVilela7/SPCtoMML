@@ -14,36 +14,46 @@ namespace SPCtoMML
                 0x10be,
         };
 
-		/// <summary>
-		/// Returns the pitch specified.
-		/// </summary>
-		/// <param name="note">The note value</param>
-		/// <param name="tuning">The tuning ($EE)</param>
-		/// <param name="multiplier8x8">The pitch multiplier in 8.8 fixed point</param>
-		/// <returns></returns>
-		public int FindPitch(int note, int tuning, int multiplier8x8)
-		{
-			if (note >= 0x34)
-			{
-				int i = note - 0x34 + tuning + note * 256;
-				tuning = i % 256;
-				note = i / 256;
-			}
-			else if (note < 0x13)
-			{
-				int i = (note - 0x13) * 2 + tuning + note * 256;
-				tuning = i % 256 & 255;
-				note = i / 256;
-			}
+        /// <summary>
+        /// Octave correction for the pitch. AMK doesn't use but other N-SPC engines
+        /// seem to use it sometimes.
+        /// </summary>
+        /// <param name="note"></param>
+        /// <param name="tuning"></param>
+        /// <returns></returns>
+        public void PitchAdjust(ref int note, ref int tuning)
+        {
+            int temp = (note << 8) + tuning;
 
+            if (note >= 0x34)
+            {
+                temp += note - 0x34;
+            }
+            else if (note < 0x13)
+            {
+                temp += (note - 0x13) * 2;
+            }
+
+            tuning = temp & 255;
+            note = temp >> 8;
+        }
+
+        /// <summary>
+        /// Returns the pitch specified.
+        /// </summary>
+        /// <param name="note">The note value</param>
+        /// <param name="tuning">The tuning ($EE)</param>
+        /// <param name="multiplier8x8">The pitch multiplier in 8.8 fixed point</param>
+        /// <returns></returns>
+        public int FindPitch(int note, int tuning, int multiplier8x8)
+		{
 			int pitch1 = pitchTable[note % 12];
 			int pitch2 = pitchTable[note % 12 + 1];
 
-			int pitch = pitch1 + (pitch2 - pitch1) * tuning / 256;
-			pitch <<= 1;
-			pitch >>= 6 - note / 12;
+            int actualPitch = pitch1 + (((pitch2 - pitch1) % 256) * tuning >> 8);
+            actualPitch >>= 6 - note / 12 - 1;
 
-			return pitch * multiplier8x8 / 256;
+            return actualPitch * multiplier8x8 >> 8;
 		}
 
 		/// <summary>
