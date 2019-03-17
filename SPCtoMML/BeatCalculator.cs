@@ -54,6 +54,11 @@ namespace SPCtoMML
             return score;
         }
 
+        public double RateDuration(int ticks)
+        {
+            return ScoreDuration(ticks, ticks);
+        }
+
         private double ScoreDuration(int minTicks, int maxTicks)
         {
             double score = 0;
