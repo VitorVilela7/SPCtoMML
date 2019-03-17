@@ -16,14 +16,27 @@ namespace SPCtoMMLTests
             2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604 // o6
         };
 
+        Pitch pitchCalculator = new Pitch();
+
         [TestMethod]
         public void FundamentalMultiplierTest()
         {
-            var pitch = new Pitch();
-            
             for (int i = 0; i < pitchList.Length; i++)
             {
-                Assert.AreEqual(pitchList[i], pitch.FindPitch(i, 0, 0x100));
+                Assert.AreEqual(pitchList[i], pitchCalculator.FindPitch(i, 0, 0x100));
+            }
+        }
+
+        [TestMethod]
+        public void NoteFindingTest()
+        {
+            for (int i = 0; i < pitchList.Length; i++)
+            {
+                var result = pitchCalculator.FindNote(pitchList[i], 0x100);
+                Assert.AreEqual(i, result[0]);
+                Assert.AreEqual(0, result[1]);
+                Assert.AreEqual(0, result[2]);
+                Assert.AreEqual(pitchList[i], result[3]);
             }
         }
     }
