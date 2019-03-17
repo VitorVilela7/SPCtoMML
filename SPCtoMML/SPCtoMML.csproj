@@ -69,6 +69,7 @@
     </Compile>
     <Compile Include="Note.cs" />
     <Compile Include="NoteDumper.cs" />
+    <Compile Include="NoteLength.cs" />
     <Compile Include="PitchCalculator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -100,8 +100,10 @@ namespace SPCtoMML
 		public double CurrentRatio { get; private set; }
 
 		public MMLDumper(Note[][] data, int defaultTempo)
-		{
-			noteData = data;
+        {
+            beatCalculator = new BeatCalculator();
+
+            noteData = data;
 			tempo = defaultTempo;
 			insertTempo = true;
 		}
@@ -161,9 +163,7 @@ namespace SPCtoMML
 
 		public int CalculateTempo()
         {
-            beatCalculator = new BeatCalculator();
-
-            var tempList = new List<int>();
+            var tempList = new List<NoteLength>();
 
             for (int c = 0; c < 8; c++)
             {
@@ -181,7 +181,13 @@ namespace SPCtoMML
                     {
                         if (noteCount > 1)
                         {
-                            tempList.Add(current + noteData[c][i].NoteLength);
+                            var tmp = new NoteLength
+                            {
+                                Length = current + noteData[c][i].NoteLength,
+                                Staccato = noteData[c][i].NoteLength
+                            };
+
+                            tempList.Add(tmp);
                         }
 
                         current = 0;
@@ -195,7 +201,7 @@ namespace SPCtoMML
 
                 if (current != 0 && noteCount > 1)
                 {
-                    tempList.Add(current);
+                    tempList.Add(new NoteLength { Length = current, Staccato = 0 });
                 }
             }
             

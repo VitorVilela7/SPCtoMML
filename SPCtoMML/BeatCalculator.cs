@@ -13,9 +13,12 @@ namespace SPCtoMML
             
             ScoreTicks(2, 0, 1.00, false);
             ScoreTicks(2, 0, 1.00, true);
+
+            // bad
+            scoreMap[0] = scoreMap[1] = scoreMap[2] = scoreMap[3] = 0;
         }
 
-        public int FindTempo(int[] noteLengths, int acceptedError)
+        public int FindTempo(NoteLength[] noteLengths, int acceptedError)
         {
             double best = 0;
             int bestTempo = 0;
@@ -34,7 +37,7 @@ namespace SPCtoMML
             return bestTempo;
         }
 
-        public double ScoreTempo(int[] noteLengths, int tempo, int acceptedError)
+        public double ScoreTempo(NoteLength[] noteLengths, int tempo, int acceptedError)
         {
             // TOTAL TIME = 512 * TICKS / TEMPO
             // TICKS = TOTAL TIME * TEMPO / 512
@@ -44,19 +47,39 @@ namespace SPCtoMML
 
             for (int i = 0; i < noteLengths.Length; i++)
             {
-                double ticks = noteLengths[i] * tempo / 512.0;
-                int minTicks = Math.Max(1, (int)Math.Round(ticks - error));
-                int maxTicks = Math.Max(1, (int)Math.Round(ticks + error));
-                score += ScoreDuration(minTicks, maxTicks);
+                score += RateDurationRange(noteLengths[i].Length, error, tempo);
+                score += RateStaccato(noteLengths[i].Staccato, error, tempo);
             }
-            
+
             score /= Math.Exp(tempo / 32);
             return score;
         }
 
         public double RateDuration(int ticks)
         {
-            return ScoreDuration(ticks, ticks);
+            if (ticks <= 1)
+            {
+                return 0;
+            }
+            else
+            {
+                return ScoreDuration(ticks, ticks);
+            }
+        }
+
+        public double RateStaccato(int staccato, double error, int tempo)
+        {
+            // TO DO?
+            return 0;
+        }
+
+        public double RateDurationRange(int length, double error, int tempo)
+        {
+            double ticks = length * tempo / 512.0;
+            int minTicks = Math.Max(1, (int)Math.Round(ticks - error));
+            int maxTicks = Math.Max(1, (int)Math.Round(ticks + error));
+
+            return ScoreDuration(minTicks, maxTicks);
         }
 
         private double ScoreDuration(int minTicks, int maxTicks)
