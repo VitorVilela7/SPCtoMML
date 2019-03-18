@@ -188,11 +188,11 @@ namespace SPCtoMML
             int rightVolumeS = DspUtils.ToByte(echoRightVolumeSlide * 0x7F / (double)masterVolume[1]);
 
             //[11:24:37] <AlcaRobot> $EF $FF $XX $YY (command, channels, left vol, right vol)
-            output.AppendLine($"$EF ${echoEnable:X2} ${leftVolume:X2} ${rightVolume:X2} ");
+            output.AppendLine($"$EF ${echoEnable:X2} ${leftVolume:X2} ${rightVolume:X2}");
 
             if (echoSlideUpdate)
             {
-                output.AppendLine($"$F2 ${echoSlideLength:X2} ${leftVolumeS:X2} ${rightVolumeS:X2} ");
+                output.AppendLine($"$F2 ${echoSlideLength:X2} ${leftVolumeS:X2} ${rightVolumeS:X2}");
             }
 
             echoVolumeUpdate = false;
@@ -207,7 +207,7 @@ namespace SPCtoMML
             if (allowEchoUpdate && !(bool)allowEcho)
             {
                 allowEchoUpdate = false;
-                return "$F0 ";
+                return "$F0";
             }
 
             if (allowEcho != null && !(bool)allowEcho)
@@ -223,7 +223,7 @@ namespace SPCtoMML
             {
                 echoDelayUpdate = echoFeedbackUpdate = false;
 
-                output.AppendLine($"$F1 ${(echoDelay & 15):X2} ${echoFeedback:X2} $01 ");
+                output.AppendLine($"$F1 ${(echoDelay & 15):X2} ${echoFeedback:X2} $01");
                 firUpdate = true;
             }
 
@@ -245,11 +245,11 @@ namespace SPCtoMML
 
                 if (firTest != 0)
                 {
-                    output.Append("$F5 ");
+                    output.Append("$F5");
 
                     for (int i = 0; i < 8; ++i)
                     {
-                        output.Append($"${firFilter[i]:X2} ");
+                        output.Append($" ${firFilter[i]:X2}");
                     }
 
                     output.AppendLine();

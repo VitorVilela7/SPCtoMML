@@ -194,6 +194,33 @@ namespace SPCtoMML
 
             return tempo;
         }
+
+        public void OutputChannel(StringBuilder output, Note[] data, int ch)
+        {
+            initChannel();
+
+            output.AppendLine($"#{ch}");
+
+            for (int l = 0; l < data.Length; ++l)
+            {
+                CurrentRatio = (l / (double)data.Length / 8.0) + (ch / 8.0);
+
+                Note note = data[l];
+                int stac = staccato[ch][l];
+
+                if (note.IsRest && l == 0)
+                {
+                    output.Append(processRest(note));
+                }
+                else if (!note.IsRest)
+                {
+                    output.Append(processNote(note, stac));
+                }
+            }
+
+            output.AppendLine();
+            output.AppendLine();
+        }
         
 		public string OutputMML()
 		{
@@ -208,29 +235,7 @@ namespace SPCtoMML
 					continue;
 				}
 
-				initChannel();
-
-                finalOutput.AppendLine($"#{ch}");
-
-				for (int l = 0; l < noteData[ch].Length; ++l)
-				{
-					CurrentRatio = (l / (double)noteData[ch].Length / 8.0) + (ch / 8.0);
-
-					Note note2 = noteData[ch][l];
-					int stac = staccato[ch][l];
-
-					if (note2.IsRest && l == 0)
-					{
-						finalOutput.Append(processRest(note2));
-					}
-					else if (!note2.IsRest)
-					{
-						finalOutput.Append(processNote(note2, stac));
-					}
-				}
-
-				finalOutput.AppendLine();
-				finalOutput.AppendLine();
+                OutputChannel(finalOutput, noteData[ch], ch);
 			}
 
 			// insert sample header
@@ -297,7 +302,7 @@ namespace SPCtoMML
 			mmlEchoUpdate();
 			mmlSampleUpdate(note.Sample, note.GainCache[0]);
 			mmlNoiseUpdate(note.UseNoise, note.Sample, note.GainCache[0]);
-			//mmlEnvelopeUpdate(note.GainCache, ref ticks, ref stacTicks);
+			mmlEnvelopeUpdate(note.GainCache, ref ticks, ref stacTicks);
 			mmlVolumeUpdate(note.VolumeCache[0]);
 
 			int[] pitchData = parsePitchCachePass2(note.PitchCache);
@@ -464,7 +469,7 @@ namespace SPCtoMML
 
 		private void removeLastChar(char c)
 		{
-			if (currentOutput[currentOutput.Length - 1] == c)
+			if (currentOutput.Length > 0 && currentOutput[currentOutput.Length - 1] == c)
 			{
 				currentOutput.Remove(currentOutput.Length - 1, 1);
 			}
@@ -962,7 +967,15 @@ namespace SPCtoMML
 
 		private void mmlEchoUpdate()
 		{
-            currentOutput.Append(echoModule.GetEchoChanges());
+            var echoChanges = echoModule.GetEchoChanges().Trim();
+
+            if (!String.IsNullOrEmpty(echoChanges))
+            {
+                removeLastChar(' ');
+                currentOutput.AppendLine();
+                currentOutput.AppendLine(echoChanges);
+                currentOutput.AppendLine();
+            }
 		}
 
 		private void mmlSampleUpdate(int sample, int envelope)
@@ -1335,18 +1348,18 @@ namespace SPCtoMML
 
 				int change = (int)tickSync;
 
-                double score1 = beatCalculator.RateDuration(intTicks);
-                double score2 = beatCalculator.RateDuration(intTicks + change);
+                //double score1 = beatCalculator.RateDuration(intTicks);
+                //double score2 = beatCalculator.RateDuration(intTicks + change);
 
-                if (score2 > score1)
-                {
+                //if (score2 > score1)
+                //{
                     tickSync -= change;
                     return intTicks + change;
-                }
-                else
-                {
-                    return intTicks;
-                }
+                //}
+                //else
+                //{
+                //    return intTicks;
+                //}
 			}
 		}
 	}
