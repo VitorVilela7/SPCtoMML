@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BeatCalculator.cs" />
+    <Compile Include="EchoModule.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -70,6 +71,7 @@
     <Compile Include="Note.cs" />
     <Compile Include="NoteDumper.cs" />
     <Compile Include="NoteLength.cs" />
+    <Compile Include="DspUtils.cs" />
     <Compile Include="PitchCalculator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
