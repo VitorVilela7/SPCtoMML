@@ -110,25 +110,25 @@ namespace SPCtoMML
 
 		public void SetupPitch(bool tuning, bool vibrato)
 		{
-			this.allowTuningCommand = tuning;
-			this.allowPitchVibrato = vibrato;
+			allowTuningCommand = tuning;
+			allowPitchVibrato = vibrato;
 		}
 
 		public void SetupVolume(bool amplify)
 		{
-			this.allowVolumeAmplify = amplify;
+			allowVolumeAmplify = amplify;
 		}
 
 		public void SetupPathSamples(string name)
 		{
-			this.samplesFolder = name;
+			samplesFolder = name;
 		}
 
 		public void SetupStaccato(bool enable, bool enableAdvanced, bool truncate)
 		{
-			this.allowStaccato = enable;
-			this.allowAdvancedStaccato = enableAdvanced;
-			this.truncateSmallRests = truncate;
+			allowStaccato = enable;
+			allowAdvancedStaccato = enableAdvanced;
+			truncateSmallRests = truncate;
 		}
 
 		public void CreateStaccatoMap()
