@@ -13,6 +13,7 @@ namespace SPCtoMML
         private Staccato staccatoSystem;
         private BeatCalculator beatCalculator;
         private PitchCalculator pitchCalculator;
+        private EchoModule echoModule;
 
         private static readonly string[] notes = { "c", "c+", "d", "d+", "e", "f", "f+", "g", "g+", "a", "a+", "b" };
 		private static Dictionary<int, int[]> findVolumeCache = new Dictionary<int, int[]>();
@@ -58,27 +59,6 @@ namespace SPCtoMML
 		private int noiseClock;
 		private bool noiseClockRefresh;
 
-		private int echoDelay;
-		private int echoEnable;
-		private int echoFeedback;
-		private int echoLeftVolume;
-		private int echoRightVolume;
-		private int echoLeftVolumeSlide;
-		private int echoRightVolumeSlide;
-		private int echoSlideLength;
-
-		private int[] firFilter;
-
-		private bool? allowEcho;
-		private bool allowEchoUpdate;
-
-		private bool firUpdate;
-		private bool echoEnableUpdate;
-		private bool echoDelayUpdate;
-		private bool echoFeedbackUpdate;
-		private bool echoVolumeUpdate;
-		private bool echoSlideUpdate;
-
 		// handlers ticks, tick compensation
 		private double tickSync;
 		private int totalTicks;
@@ -102,10 +82,13 @@ namespace SPCtoMML
 		public MMLDumper(Note[][] data, int defaultTempo)
         {
             beatCalculator = new BeatCalculator();
+            echoModule = new EchoModule();
 
             noteData = data;
 			tempo = defaultTempo;
 			insertTempo = true;
+
+            echoModule.TempoUpdate(tempo);
 		}
 
 		public void SetupPitch(bool tuning, bool vibrato)
@@ -205,11 +188,11 @@ namespace SPCtoMML
                 }
             }
             
-            int foundTempo = beatCalculator.FindTempo(tempList.ToArray(), 2);
-
-            tempo = foundTempo;
+            tempo = beatCalculator.FindTempo(tempList.ToArray(), 2);
+            echoModule.TempoUpdate(tempo);
             insertTempo = true;
-            return foundTempo;
+
+            return tempo;
         }
         
 		public string OutputMML()
@@ -588,8 +571,8 @@ namespace SPCtoMML
 				return;
 			}
 
-			bool echoSync = false;
-
+            echoModule.ResetSync();
+			
 			foreach (NoteEvent e in events)
 			{
 				// special events should get updated even if the previous
@@ -597,24 +580,11 @@ namespace SPCtoMML
 				switch (e.EventType)
 				{
 					case NoteEventType.EnableEcho:
-						if (allowEcho != null && !(bool)allowEcho)
-						{
-							allowEchoUpdate = true;
-							echoDelayUpdate = true;
-							echoEnableUpdate = true;
-							echoVolumeUpdate = true;
-							echoFeedbackUpdate = true;
-							firUpdate = true;
-						}
-						allowEcho = true;
+                        echoModule.EchoEnableEvent();
 						break;
 
 					case NoteEventType.DisableEcho:
-						if (allowEcho != false)
-						{
-							allowEchoUpdate = true;
-							allowEcho = false;
-						}
+                        echoModule.EchoDisableEvent();
 						break;
 
 					case NoteEventType.PitchModulationUpdate:
@@ -622,11 +592,14 @@ namespace SPCtoMML
 						break;
 
 					case NoteEventType.MasterVolumeUpdate:
-						masterVolume = e.EventData;
-						for (int i = 0; i < 2; ++i)
+                        masterVolume = new int[2];
+                        
+						for (int i = 0; i < 2; i++)
 						{
-							masterVolume[i] = signedByteToInt((byte)masterVolume[i]);
+                            masterVolume[i] = DspUtils.ToSigned((byte)e.EventData[i]);
 						}
+
+                        echoModule.MasterVolumeUpdate(masterVolume);
 						break;
 
 					case NoteEventType.NoiseUpdate:
@@ -637,83 +610,28 @@ namespace SPCtoMML
 						break;
 
 					case NoteEventType.EchoDelayUpdate:
-						echoDelay = e.EventData[0];
-						if (!echoSync) echoDelayUpdate = true;
+                        echoModule.EchoDelayUpdate(e.EventData[0]);
 						break;
 
 					case NoteEventType.EchoEnableUpdate:
-						echoEnable = e.EventData[0];
-						if (!echoSync) echoEnableUpdate = true;
+                        echoModule.EchoEnableUpdate(e.EventData[0]);
 						break;
 
 					case NoteEventType.EchoFeedbackUpdate:
-						echoFeedback = e.EventData[e.EventData.Length - 2];
-						if (!echoSync)
-						{
-							echoFeedbackUpdate = true;
-						}
+                        echoModule.EchoFeedbackUpdate(e.EventData[e.EventData.Length - 2]);
 						break;
 
 					case NoteEventType.EchoFirFilterUpdate:
-						firFilter = e.EventData;
-						if (!echoSync) firUpdate = true;
+                        echoModule.EchoFirUpdate(e.EventData);
 						break;
 
 					case NoteEventType.EchoVolumeUpdate:
-						if (e.EventData.Length <= 4)
-						{
-							echoLeftVolume = signedByteToInt((byte)(e.EventData[e.EventData.Length - 2] & 255));
-							echoRightVolume = signedByteToInt((byte)(e.EventData[e.EventData.Length - 2] >> 8));
-							if (!echoSync) echoVolumeUpdate = true;
-							if (!echoSync) echoSlideUpdate = false;
-						}
-						else
-						{
-							int length = e.EventData.Length;
-							int index = 2;
-							int mode = e.EventData[index - 2] > e.EventData[index] ? 1 : 0;
-							bool okSlide = true;
+                        echoModule.VolumeUpdate(e.EventData);
 
-							for (index = 2; index < length; index += 2)
-							{
-								if (mode != (e.EventData[index - 2] > e.EventData[index] ? 1 : 0))
-								{
-									//okSlide = false;
-									break;
-								}
-							}
-
-							if (index == 2)
-							{
-								okSlide = false;
-							}
-
-							if (!echoSync) echoVolumeUpdate = true;
-
-							if (okSlide)
-							{
-								echoLeftVolume = signedByteToInt((byte)(e.EventData[0] & 255));
-								echoRightVolume = signedByteToInt((byte)(e.EventData[0] >> 8));
-								echoLeftVolumeSlide = signedByteToInt((byte)(e.EventData[index - 2] & 255));
-								echoRightVolumeSlide = signedByteToInt((byte)(e.EventData[index - 2] >> 8));
-								echoSlideLength = timeToTicks(e.EventData[index - 1], 2);
-								if (echoSlideLength > 0xFF) echoSlideLength = 0xFF;
-								if (!echoSync) echoSlideUpdate = true;
-							}
-							else
-							{
-								echoLeftVolume = signedByteToInt((byte)(e.EventData[index - 2] & 255));
-								echoRightVolume = signedByteToInt((byte)(e.EventData[index - 2] >> 8));
-								echoLeftVolumeSlide = 0;
-								echoRightVolumeSlide = 0;
-								echoSlideLength = 0;
-								if (!echoSync) echoSlideUpdate = false;
-							}
-						}
 						break;
 
 					case NoteEventType.EchoSync:
-						echoSync = true;
+                        echoModule.EnableSync();
 						break;
 
 					default:
@@ -900,25 +818,7 @@ namespace SPCtoMML
 
 		private void initChannel()
 		{
-			allowEchoUpdate = false;
-			allowEcho = null;
-
-			echoVolumeUpdate = false;
-			echoEnableUpdate = false;
-			echoDelayUpdate = false;
-			echoSlideUpdate = false;
-			firUpdate = false;
-
-			echoDelay = 0;
-			echoEnable = 0;
-			echoFeedback = 0;
-			echoLeftVolume = 0;
-			echoRightVolume = 0;
-			echoLeftVolumeSlide = 0;
-			echoRightVolumeSlide = 0;
-			echoSlideLength = 0;
-
-			firFilter = new int[8];
+            echoModule.InitEchoChannel();
 
 			noiseEnable = false;
 			noiseClockRefresh = false;
@@ -1061,81 +961,7 @@ namespace SPCtoMML
 
 		private void mmlEchoUpdate()
 		{
-			if (allowEchoUpdate && !(bool)allowEcho)
-			{
-				currentOutput.Append("$F0 ");
-				allowEchoUpdate = false;
-				return;
-			}
-
-			if (allowEcho != null && !(bool)allowEcho)
-			{
-				return;
-			}
-
-			allowEchoUpdate = false;
-			mmlEchoVolumeUpdate();
-
-			if (echoDelayUpdate || echoFeedbackUpdate)
-			{
-				echoDelayUpdate = echoFeedbackUpdate = false;
-
-				currentOutput.AppendFormat("$F1 ${0:X2} ${1:X2} ${2:X2} ", echoDelay & 15, echoFeedback, 0x01);
-				firUpdate = true;
-			}
-
-			if (firUpdate)
-			{
-				firUpdate = false;
-				int firTest = 0;
-				for (int i = 0; i < 8; ++i)
-				{
-					if (i == 0 && firFilter[i] == 0x7F)
-					{
-						continue;
-					}
-					firTest |= firFilter[i];
-				}
-
-				if (firTest != 0)
-				{
-					currentOutput.Append("$F5 ");
-					for (int i = 0; i < 8; ++i)
-					{
-						currentOutput.AppendFormat("${0:X2} ", firFilter[i]);
-					}
-				}
-			}
-		}
-
-		private void mmlEchoVolumeUpdate()
-		{
-			if (!echoSlideUpdate && !echoEnableUpdate && !echoVolumeUpdate)
-			{
-				return;
-			}
-
-			int leftVolume = intToSignedByte((int)Math.Max(-128, Math.Min(127,
-				Math.Round(echoLeftVolume * 0x7F / (double)masterVolume[0]))));
-			int rightVolume = intToSignedByte((int)Math.Max(-128, Math.Min(127,
-				Math.Round(echoRightVolume * 0x7F / (double)masterVolume[1]))));
-
-			int leftVolumeS = intToSignedByte((int)Math.Max(-128, Math.Min(127,
-				Math.Round(echoLeftVolumeSlide * 0x7F / (double)masterVolume[0]))));
-			int rightVolumeS = intToSignedByte((int)Math.Max(-128, Math.Min(127,
-				Math.Round(echoRightVolumeSlide * 0x7F / (double)masterVolume[1]))));
-
-			//[11:24:37] <AlcaRobot> $EF $FF $XX $YY (command, channels, left vol, right vol)
-			currentOutput.AppendFormat("$EF ${0:X2} ${1:X2} ${2:X2} ", echoEnable, leftVolume, rightVolume);
-
-			if (echoSlideUpdate)
-			{
-				currentOutput.AppendFormat("$F2 ${0:X2} ${1:X2} ${2:X2} ", echoSlideLength, leftVolumeS, rightVolumeS);
-			}
-
-			echoVolumeUpdate = false;
-			echoSlideUpdate = false;
-			echoEnableUpdate = false;
+            currentOutput.Append(echoModule.GetEchoChanges());
 		}
 
 		private void mmlSampleUpdate(int sample, int envelope)
@@ -1324,14 +1150,15 @@ namespace SPCtoMML
 
 		private void mmlVolumeUpdate(int mixedVolume)
 		{
-			int leftVolume = (int)Math.Ceiling(signedByteToInt((byte)(mixedVolume & 0xFF)) * masterVolume[0] / 127.0);
-			int rightVolume = (int)Math.Ceiling(signedByteToInt((byte)(mixedVolume >> 8)) * masterVolume[1] / 127.0);
+            // FIX ME: this will likely blow up on negative values.
+			int leftVolume = (int)Math.Ceiling(DspUtils.ToSigned((byte)(mixedVolume & 0xFF)) * masterVolume[0] / 127.0);
+			int rightVolume = (int)Math.Ceiling(DspUtils.ToSigned((byte)(mixedVolume >> 8)) * masterVolume[1] / 127.0);
 
 			leftVolume = Math.Max(-128, Math.Min(127, leftVolume));
 			rightVolume = Math.Max(-128, Math.Min(127, rightVolume));
 
-			leftVolume = intToSignedByte(leftVolume);
-			rightVolume = intToSignedByte(rightVolume);
+			leftVolume = DspUtils.ToByte(leftVolume);
+			rightVolume = DspUtils.ToByte(rightVolume);
 
 			mixedVolume = leftVolume | (rightVolume << 8);
 
@@ -1519,30 +1346,6 @@ namespace SPCtoMML
                 {
                     return intTicks;
                 }
-			}
-		}
-
-		private int signedByteToInt(byte value)
-		{
-			if (value >= 0x80)
-			{
-				return -((value ^ 0xFF) + 1);
-			}
-			else
-			{
-				return value;
-			}
-		}
-
-		private byte intToSignedByte(int value)
-		{
-			if (value < 0)
-			{
-				return (byte)((Math.Abs(value) ^ 0xFF) + 1);
-			}
-			else
-			{
-				return (byte)value;
 			}
 		}
 	}
