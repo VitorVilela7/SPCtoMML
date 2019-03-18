@@ -188,11 +188,11 @@ namespace SPCtoMML
             int rightVolumeS = DspUtils.ToByte(echoRightVolumeSlide * 0x7F / (double)masterVolume[1]);
 
             //[11:24:37] <AlcaRobot> $EF $FF $XX $YY (command, channels, left vol, right vol)
-            output.AppendFormat("$EF ${0:X2} ${1:X2} ${2:X2} ", echoEnable, leftVolume, rightVolume);
+            output.AppendLine($"$EF ${echoEnable:X2} ${leftVolume:X2} ${rightVolume:X2} ");
 
             if (echoSlideUpdate)
             {
-                output.AppendFormat("$F2 ${0:X2} ${1:X2} ${2:X2} ", echoSlideLength, leftVolumeS, rightVolumeS);
+                output.AppendLine($"$F2 ${echoSlideLength:X2} ${leftVolumeS:X2} ${rightVolumeS:X2} ");
             }
 
             echoVolumeUpdate = false;
@@ -223,30 +223,36 @@ namespace SPCtoMML
             {
                 echoDelayUpdate = echoFeedbackUpdate = false;
 
-                output.Append($"$F1 ${(echoDelay & 15):X2} ${echoFeedback:X2} $01");
+                output.AppendLine($"$F1 ${(echoDelay & 15):X2} ${echoFeedback:X2} $01 ");
                 firUpdate = true;
             }
 
             if (firUpdate)
             {
                 firUpdate = false;
+
                 int firTest = 0;
+
                 for (int i = 0; i < 8; ++i)
                 {
                     if (i == 0 && firFilter[i] == 0x7F)
                     {
                         continue;
                     }
+
                     firTest |= firFilter[i];
                 }
 
                 if (firTest != 0)
                 {
                     output.Append("$F5 ");
+
                     for (int i = 0; i < 8; ++i)
                     {
                         output.Append($"${firFilter[i]:X2} ");
                     }
+
+                    output.AppendLine();
                 }
             }
 

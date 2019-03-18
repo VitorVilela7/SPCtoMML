@@ -209,7 +209,8 @@ namespace SPCtoMML
 				}
 
 				initChannel();
-				finalOutput.AppendFormat("#{0} ", ch);
+
+                finalOutput.AppendLine($"#{ch}");
 
 				for (int l = 0; l < noteData[ch].Length; ++l)
 				{
